@@ -32,9 +32,7 @@ final class LocalProxy: @unchecked Sendable {
         stop()
         self.port = port
 
-        let parameters = NWParameters.tcp
-        parameters.allowLocalEndpointReuse = true
-        let listener = try NWListener(using: parameters, on: NWEndpoint.Port(rawValue: port)!)
+        let listener = try NWListener(using: Self.tcpParameters(), on: NWEndpoint.Port(rawValue: port)!)
         self.listener = listener
 
         listener.newConnectionHandler = { [weak self] connection in
@@ -124,16 +122,19 @@ final class LocalProxy: @unchecked Sendable {
         }
 
         let endpoint = NWEndpoint.hostPort(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: UInt16(localPort))!)
-        let upstream = NWConnection(to: endpoint, using: .tcp)
+        let upstream = NWConnection(to: endpoint, using: Self.tcpParameters())
+        let rewriter = RequestStreamRewriter(localPort: localPort)
         upstream.start(queue: DispatchQueue.global(qos: .userInitiated))
         upstream.stateUpdateHandler = { [weak self] state in
             guard let self else { return }
             switch state {
             case .ready:
-                let rewritten = Self.rewriteForUpstream(initial, localPort: localPort)
-                upstream.send(content: rewritten, completion: .contentProcessed { _ in })
-                self.pipe(from: client, to: upstream)
-                self.pipe(from: upstream, to: client)
+                let first = rewriter.ingest(initial)
+                if !first.isEmpty {
+                    upstream.send(content: first, completion: .contentProcessed { _ in })
+                }
+                self.pipe(from: client, to: upstream, rewriter: rewriter)
+                self.pipe(from: upstream, to: client, rewriter: nil)
             case .failed, .cancelled:
                 client.cancel()
                 upstream.cancel()
@@ -143,19 +144,41 @@ final class LocalProxy: @unchecked Sendable {
         }
     }
 
-    private func pipe(from: NWConnection, to: NWConnection) {
-        from.receive(minimumIncompleteLength: 1, maximumLength: 64 * 1024) { data, _, isComplete, error in
-            if let data, !data.isEmpty {
-                to.send(content: data, completion: .contentProcessed { _ in
-                    self.pipe(from: from, to: to)
-                })
-            } else if isComplete || error != nil {
+    private func pipe(from: NWConnection, to: NWConnection, rewriter: RequestStreamRewriter?) {
+        from.receive(minimumIncompleteLength: 1, maximumLength: 256 * 1024) { data, _, isComplete, error in
+            if error != nil {
                 to.cancel()
                 from.cancel()
-            } else {
-                self.pipe(from: from, to: to)
+                return
             }
+            if let data, !data.isEmpty {
+                let outgoing = rewriter?.ingest(data) ?? data
+                if !outgoing.isEmpty {
+                    to.send(content: outgoing, completion: .contentProcessed { sendError in
+                        if sendError != nil {
+                            to.cancel()
+                            from.cancel()
+                        }
+                    })
+                }
+            }
+            if isComplete {
+                to.send(content: nil, isComplete: true, completion: .contentProcessed { _ in
+                    to.cancel()
+                })
+                return
+            }
+            self.pipe(from: from, to: to, rewriter: rewriter)
         }
+    }
+
+    private static func tcpParameters() -> NWParameters {
+        let parameters = NWParameters.tcp
+        parameters.allowLocalEndpointReuse = true
+        if let tcp = parameters.defaultProtocolStack.transportProtocol as? NWProtocolTCP.Options {
+            tcp.noDelay = true
+        }
+        return parameters
     }
 
     private func sendQuick(_ connection: NWConnection, status: Int, body: String) {
@@ -183,55 +206,95 @@ final class LocalProxy: @unchecked Sendable {
         return nil
     }
 
-    /// Dev servers (Vite, etc.) often block unknown Host values. Don't force every
-    /// project to change config — present the request as localhost instead.
-    private static func rewriteForUpstream(_ request: Data, localPort: Int) -> Data {
-        guard let text = String(data: request, encoding: .utf8) else { return request }
+    /// Dev servers (Vite, webpack, etc.) reject unknown Host values and also
+    /// honor keep-alive — so every request on the connection must look local,
+    /// not just the first one.
+    fileprivate static func rewriteForUpstream(_ request: Data, localPort: Int) -> Data {
+        let text = String(data: request, encoding: .utf8)
+            ?? String(data: request, encoding: .ascii)
+        guard let text else { return request }
+
         let parts = text.components(separatedBy: "\r\n\r\n")
         guard let head = parts.first else { return request }
         let body = parts.count > 1 ? parts[1...].joined(separator: "\r\n\r\n") : ""
 
-        let upstreamHost = "127.0.0.1:\(localPort)"
+        let upstreamHost = "localhost:\(localPort)"
         let upstreamOrigin = "http://\(upstreamHost)"
         var originalHost: String?
 
         var lines = head.split(separator: "\r\n", omittingEmptySubsequences: false).map(String.init)
-        for i in lines.indices {
-            let lower = lines[i].lowercased()
+        while lines.last?.isEmpty == true {
+            lines.removeLast()
+        }
+
+        var sawHost = false
+        var rewrittenLines: [String] = []
+        rewrittenLines.reserveCapacity(lines.count + 1)
+
+        for line in lines {
+            let lower = line.lowercased()
             if lower.hasPrefix("host:") {
-                originalHost = lines[i].dropFirst(5).trimmingCharacters(in: .whitespaces)
-                lines[i] = "Host: \(upstreamHost)"
+                originalHost = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
+                rewrittenLines.append("Host: \(upstreamHost)")
+                sawHost = true
             } else if lower.hasPrefix("origin:") {
-                lines[i] = "Origin: \(upstreamOrigin)"
+                rewrittenLines.append("Origin: \(upstreamOrigin)")
             } else if lower.hasPrefix("referer:") {
-                let value = lines[i].dropFirst(8).trimmingCharacters(in: .whitespaces)
-                if let host = originalHost ?? host(from: request),
-                   let rewritten = rewriteURLString(value, fromHost: host, toOrigin: upstreamOrigin) {
-                    lines[i] = "Referer: \(rewritten)"
+                let value = line.dropFirst(8).trimmingCharacters(in: .whitespaces)
+                if let host = originalHost,
+                   let next = rewriteURLString(value, fromHost: host, toOrigin: upstreamOrigin) {
+                    rewrittenLines.append("Referer: \(next)")
+                } else {
+                    rewrittenLines.append(line)
                 }
+            } else if lower.hasPrefix("x-forwarded-host:")
+                        || lower.hasPrefix("x-original-host:")
+                        || lower.hasPrefix("forwarded:") {
+                continue
+            } else {
+                rewrittenLines.append(line)
             }
         }
 
-        // Second pass for Referer if Host appeared after it.
         if let host = originalHost {
-            for i in lines.indices where lines[i].lowercased().hasPrefix("referer:") {
-                let value = lines[i].dropFirst(8).trimmingCharacters(in: .whitespaces)
-                if let rewritten = rewriteURLString(value, fromHost: host, toOrigin: upstreamOrigin) {
-                    lines[i] = "Referer: \(rewritten)"
+            for i in rewrittenLines.indices where rewrittenLines[i].lowercased().hasPrefix("referer:") {
+                let value = rewrittenLines[i].dropFirst(8).trimmingCharacters(in: .whitespaces)
+                if let next = rewriteURLString(value, fromHost: host, toOrigin: upstreamOrigin) {
+                    rewrittenLines[i] = "Referer: \(next)"
                 }
             }
         }
 
-        var rebuilt = lines.joined(separator: "\r\n")
+        if !sawHost, !rewrittenLines.isEmpty {
+            rewrittenLines.insert("Host: \(upstreamHost)", at: min(1, rewrittenLines.count))
+        }
+
+        var rebuilt = rewrittenLines.joined(separator: "\r\n")
         rebuilt += "\r\n\r\n"
         rebuilt += body
         return Data(rebuilt.utf8)
     }
 
+    fileprivate static func contentLength(in http: Data) -> Int? {
+        let text = String(data: http, encoding: .utf8)
+            ?? String(data: http, encoding: .ascii)
+        guard let text else { return 0 }
+        let head = text.components(separatedBy: "\r\n\r\n").first ?? text
+        for raw in head.split(separator: "\r\n") {
+            let line = raw.lowercased()
+            if line.hasPrefix("transfer-encoding:"), line.contains("chunked") {
+                return nil
+            }
+            if line.hasPrefix("content-length:") {
+                return Int(raw.dropFirst(15).trimmingCharacters(in: .whitespaces)) ?? 0
+            }
+        }
+        return 0
+    }
+
     private static func rewriteURLString(_ value: String, fromHost: String, toOrigin: String) -> String? {
         let hostOnly = fromHost.split(separator: ":").first.map(String.init) ?? fromHost
         guard let url = URL(string: value), let urlHost = url.host else {
-            // Relative or opaque — leave unchanged.
             return nil
         }
         guard urlHost.caseInsensitiveCompare(hostOnly) == .orderedSame
@@ -243,5 +306,59 @@ final class LocalProxy: @unchecked Sendable {
         if let query = url.query { path += "?\(query)" }
         if let fragment = url.fragment { path += "#\(fragment)" }
         return toOrigin + path
+    }
+}
+
+/// Rewrites Host/Origin on every HTTP/1.1 request in a keep-alive stream.
+private final class RequestStreamRewriter: @unchecked Sendable {
+    private let lock = NSLock()
+    private let localPort: Int
+    private var buffer = Data()
+    private var bodyRemaining: Int = 0
+    private var passthrough = false
+
+    init(localPort: Int) {
+        self.localPort = localPort
+    }
+
+    func ingest(_ data: Data) -> Data {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if passthrough {
+            return data
+        }
+
+        buffer.append(data)
+        var output = Data()
+
+        while true {
+            if bodyRemaining > 0 {
+                let take = min(bodyRemaining, buffer.count)
+                if take == 0 { break }
+                output.append(buffer.prefix(take))
+                buffer.removeSubrange(0..<take)
+                bodyRemaining -= take
+                continue
+            }
+
+            guard let headerEnd = buffer.range(of: Data("\r\n\r\n".utf8)) else { break }
+            let headerBlock = Data(buffer[..<headerEnd.upperBound])
+            buffer.removeSubrange(..<headerEnd.upperBound)
+            let rewritten = LocalProxy.rewriteForUpstream(headerBlock, localPort: localPort)
+            output.append(rewritten)
+
+            if let length = LocalProxy.contentLength(in: rewritten) {
+                bodyRemaining = length
+            } else {
+                // Chunked client body — pass the rest of this connection through.
+                passthrough = true
+                output.append(buffer)
+                buffer.removeAll()
+                break
+            }
+        }
+
+        return output
     }
 }

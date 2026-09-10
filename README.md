@@ -47,19 +47,18 @@ No changes required in the target project — Lantern rewrites `Host` to localho
 ```bash
 git clone https://github.com/<you>/lantern.git
 cd lantern
-chmod +x scripts/build.sh
-./scripts/build.sh
-open build/DerivedData/Build/Products/Debug/Lantern.app
+brew install xcodegen
+make run
 ```
 
-Or:
+Inner loop:
 
-```bash
-xcodegen generate
-open Lantern.xcodeproj
+```text
+make run        # generate, build Debug, relaunch menu bar app
+make relaunch   # reopen last build (no compile)
+make open       # Xcode
+make status     # Control API
 ```
-
-Run the **Lantern** scheme.
 
 ## Usage
 

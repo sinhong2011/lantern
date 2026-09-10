@@ -15,10 +15,11 @@ xcodegen generate
 open Lantern.xcodeproj
 ```
 
-Or build from the CLI:
+Or from the CLI:
 
 ```bash
-./scripts/build.sh
+make run        # generate, build, relaunch
+make open       # Xcode
 ```
 
 ## Guidelines

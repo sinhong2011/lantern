@@ -15,21 +15,24 @@ struct MenuPanelView: View {
                     .transition(.move(edge: .trailing).combined(with: .opacity))
             } else {
                 homePanel
+                    .transition(.move(edge: .leading).combined(with: .opacity))
             }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .frame(width: LanternTheme.panelWidth - LanternTheme.panelPadding * 2, alignment: .top)
+        .padding(LanternTheme.panelPadding)
+        .frame(width: LanternTheme.panelWidth, alignment: .top)
+        .frame(maxHeight: .infinity, alignment: .top)
         .overlay(alignment: .bottom) {
             if let toast = model.toastMessage {
                 toastBanner(toast)
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, model.showingAddSheet ? 10 : 46)
+                    .padding(.horizontal, LanternTheme.panelPadding)
+                    .padding(.bottom, 46)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .animation(.easeOut(duration: 0.18), value: model.toastMessage)
-        .animation(.easeOut(duration: 0.2), value: model.showingAddSheet)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .animation(.easeOut(duration: 0.16), value: model.showingAddSheet)
+        .lanternPanelBackground()
         .onAppear {
             model.start()
             if !reduceMotion {
@@ -56,7 +59,7 @@ struct MenuPanelView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 10) {
+                    VStack(spacing: 10) {
                         ForEach(model.store.aliases) { alias in
                             ServiceRowView(alias: alias)
                         }
@@ -72,38 +75,36 @@ struct MenuPanelView: View {
     }
 
     private var header: some View {
-        LanternSection {
-            HStack(spacing: 10) {
-                Image(systemName: "light.min")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(LanternTheme.accent)
-                    .frame(width: 22)
+        HStack(spacing: 10) {
+            Image(systemName: "light.min")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(LanternTheme.accent)
+                .frame(width: 22)
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Lantern")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text(model.network.statusLabel)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-
-                Spacer(minLength: 8)
-
-                Toggle("", isOn: Binding(
-                    get: { model.store.masterBroadcastEnabled },
-                    set: { model.setMasterBroadcast($0) }
-                ))
-                .toggleStyle(.switch)
-                .labelsHidden()
-                .controlSize(.small)
-                .tint(LanternTheme.accent)
-                .accessibilityLabel("Broadcast")
-                .help(model.store.masterBroadcastEnabled ? "Broadcasting on LAN" : "Broadcast off")
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Lantern")
+                    .font(.system(size: 13, weight: .semibold))
+                Text(model.network.statusLabel)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 11)
+
+            Spacer(minLength: 8)
+
+            Toggle("", isOn: Binding(
+                get: { model.store.masterBroadcastEnabled },
+                set: { model.setMasterBroadcast($0) }
+            ))
+            .toggleStyle(.switch)
+            .labelsHidden()
+            .controlSize(.small)
+            .tint(LanternTheme.accent)
+            .accessibilityLabel("Broadcast")
+            .help(model.store.masterBroadcastEnabled ? "Broadcasting on LAN" : "Broadcast off")
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 4)
     }
 
     private func errorBanner(_ error: String) -> some View {
@@ -190,18 +191,16 @@ struct MenuPanelView: View {
             .foregroundStyle(.secondary)
             .help("Settings")
 
-            Menu {
-                Button("Quit Lantern", role: .destructive) {
-                    NSApplication.shared.terminate(nil)
-                }
+            Button {
+                NSApplication.shared.terminate(nil)
             } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.secondary)
+                Image(systemName: "power")
+                    .font(.system(size: 12, weight: .semibold))
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .help("More")
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .keyboardShortcut("q", modifiers: .command)
+            .help("Quit Lantern")
         }
         .padding(.horizontal, 4)
         .padding(.top, 2)

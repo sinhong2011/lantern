@@ -21,6 +21,8 @@ final class AppModel {
     var draftPort = "8080"
     var draftNotes = ""
     var toastMessage: String?
+    /// BetterDisplay-style accordion: one expanded service section at a time.
+    var expandedServiceID: UUID?
     private var toastToken = UUID()
     private var didStart = false
 
@@ -124,6 +126,7 @@ final class AppModel {
             notes: "OrbStack / docker -p"
         )
         store.upsert(sample)
+        expandedServiceID = sample.id
         showToast("Added web.local → localhost:8080")
         Task { await reconcile() }
     }
@@ -159,8 +162,19 @@ final class AppModel {
     }
 
     func deleteAlias(_ alias: ServiceAlias) {
+        if expandedServiceID == alias.id {
+            expandedServiceID = nil
+        }
         store.remove(id: alias.id)
         Task { await reconcile() }
+    }
+
+    func setExpandedService(_ id: UUID?) {
+        expandedServiceID = id
+    }
+
+    func toggleExpandedService(_ id: UUID) {
+        expandedServiceID = expandedServiceID == id ? nil : id
     }
 
     func beginAdd() {
@@ -200,6 +214,7 @@ final class AppModel {
         )
         store.upsert(alias)
         showingAddSheet = false
+        expandedServiceID = alias.id
         showToast(wasEditing ? "Updated \(alias.hostName)" : "Added \(alias.hostName)")
         Task { await reconcile() }
     }
@@ -294,6 +309,20 @@ final class AppModel {
 
         if method == "POST" && path == "/reconcile" {
             Task { await reconcile() }
+            return ["ok": true]
+        }
+
+        if method == "POST" && path == "/ui/edit" {
+            if let alias = store.aliases.first {
+                beginEdit(alias)
+            } else {
+                beginAdd()
+            }
+            return ["ok": true, "showingAddSheet": showingAddSheet]
+        }
+
+        if method == "POST" && path == "/ui/home" {
+            cancelDraft()
             return ["ok": true]
         }
 
