@@ -47,23 +47,29 @@ final class AppUpdater {
     }
 }
 
-private final class UpdatePresenter: NSObject, @MainActor SPUStandardUserDriverDelegate {
-    var supportsGentleScheduledUpdateReminders: Bool { true }
+private final class UpdatePresenter: NSObject, SPUStandardUserDriverDelegate {
+    nonisolated var supportsGentleScheduledUpdateReminders: Bool { true }
 
-    func standardUserDriverWillHandleShowingUpdate(
+    nonisolated func standardUserDriverWillHandleShowingUpdate(
         _ handleShowingUpdate: Bool,
-        for update: SUAppcastItem,
+        forUpdate update: SUAppcastItem,
         state: SPUUserUpdateState
     ) {
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+        Task { @MainActor in
+            NSApp.setActivationPolicy(.regular)
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 
-    func standardUserDriverWillShowModalAlert() {
-        NSApp.activate(ignoringOtherApps: true)
+    nonisolated func standardUserDriverWillShowModalAlert() {
+        Task { @MainActor in
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 
-    func standardUserDriverWillFinishUpdateSession() {
-        NSApp.setActivationPolicy(.accessory)
+    nonisolated func standardUserDriverWillFinishUpdateSession() {
+        Task { @MainActor in
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 }
