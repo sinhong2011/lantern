@@ -5,7 +5,7 @@ import Testing
 @MainActor
 struct AccessLogStoreTests {
     @Test func newestFirstAndCapsAt300() {
-        let store = AccessLogStore()
+        let store = AccessLogStore(persist: false)
         for index in 1...301 {
             store.recordActivity(.broadcastOn, "\(index)")
         }
@@ -23,7 +23,7 @@ struct AccessLogStoreTests {
     }
 
     @Test func filtersByKindHostAndQuery() {
-        let store = AccessLogStore()
+        let store = AccessLogStore(persist: false)
         store.append(.access(AccessEvent(
             method: "GET",
             path: "/",
@@ -42,7 +42,7 @@ struct AccessLogStoreTests {
     }
 
     @Test func recentHitsArePerAlias() {
-        let store = AccessLogStore()
+        let store = AccessLogStore(persist: false)
         let web = ServiceAlias(name: "web", localPort: 8080)
         store.append(.access(AccessEvent(
             method: "GET", path: "/a", host: "web.local", client: nil, localPort: 8080, outcome: .forwarded
@@ -56,7 +56,7 @@ struct AccessLogStoreTests {
     }
 
     @Test func clearEmptiesTheRing() {
-        let store = AccessLogStore()
+        let store = AccessLogStore(persist: false)
         store.recordActivity(.broadcastOff, "Broadcast off")
         store.clear()
         #expect(store.entries.isEmpty)

@@ -5,9 +5,26 @@ import Observation
 @MainActor
 @Observable
 final class NetworkMonitor {
+    enum LinkKind: Equatable, Sendable {
+        case wifi
+        case ethernet
+        case other
+        case none
+
+        var symbolName: String {
+            switch self {
+            case .wifi: "wifi"
+            case .ethernet: "cable.connector"
+            case .other: "network"
+            case .none: "wifi.slash"
+            }
+        }
+    }
+
     private(set) var lanIPv4: String?
     private(set) var interfaceName: String?
     private(set) var isSatisfied: Bool = false
+    private(set) var linkKind: LinkKind = .none
     private(set) var statusLabel: String = "Looking for network…"
 
     private let monitor = NWPathMonitor()
@@ -31,6 +48,7 @@ final class NetworkMonitor {
         guard path.status == .satisfied else {
             lanIPv4 = nil
             interfaceName = nil
+            linkKind = .none
             statusLabel = "No network"
             return
         }
@@ -45,12 +63,22 @@ final class NetworkMonitor {
 
         interfaceName = preferred?.name
         lanIPv4 = Self.ipv4Address(for: preferred?.name)
+        linkKind = Self.kind(for: preferred?.type)
         if let ip = lanIPv4, let name = interfaceName {
             statusLabel = "\(name) · \(ip)"
         } else if let ip = lanIPv4 {
             statusLabel = ip
         } else {
             statusLabel = "Connected · no IPv4"
+        }
+    }
+
+    private static func kind(for type: NWInterface.InterfaceType?) -> LinkKind {
+        switch type {
+        case .wifi: .wifi
+        case .wiredEthernet: .ethernet
+        case nil: .none
+        default: .other
         }
     }
 

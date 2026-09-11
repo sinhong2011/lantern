@@ -7,7 +7,7 @@ final class AliasStore {
     private(set) var aliases: [ServiceAlias] = []
     var masterBroadcastEnabled: Bool = false
     var proxyEnabled: Bool = true
-    var proxyPort: Int = 80
+    var proxyPort: Int = 8787
     var launchAtLogin: Bool = false
 
     private let fileURL: URL
@@ -16,7 +16,7 @@ final class AliasStore {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let dir = support.appendingPathComponent("Lantern", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        self.fileURL = fileURL ?? dir.appendingPathComponent("state.json")
+        self.fileURL = fileURL ?? LanternPaths.stateFile
         load()
     }
 
@@ -30,8 +30,15 @@ final class AliasStore {
             aliases = decoded.aliases
             masterBroadcastEnabled = decoded.masterBroadcastEnabled
             proxyEnabled = decoded.proxyEnabled
-            proxyPort = decoded.proxyPort
             launchAtLogin = decoded.launchAtLogin
+            let version = decoded.schemaVersion ?? 1
+            // Pre-0.2 files defaulted to :80. Keep :80 only after the user opts in (schema 2+).
+            proxyPort = version < PersistedState.currentSchema && decoded.proxyPort == 80
+                ? 8787
+                : decoded.proxyPort
+            if version < PersistedState.currentSchema {
+                save()
+            }
         } catch {
             aliases = []
         }
@@ -43,7 +50,8 @@ final class AliasStore {
             masterBroadcastEnabled: masterBroadcastEnabled,
             proxyEnabled: proxyEnabled,
             proxyPort: proxyPort,
-            launchAtLogin: launchAtLogin
+            launchAtLogin: launchAtLogin,
+            schemaVersion: PersistedState.currentSchema
         )
         guard let data = try? JSONEncoder().encode(state) else { return }
         try? data.write(to: fileURL, options: [.atomic])
@@ -77,12 +85,20 @@ final class AliasStore {
     var activeAliases: [ServiceAlias] {
         aliases.filter(\.enabled)
     }
+
+    func hasName(_ name: String, except id: UUID? = nil) -> Bool {
+        let key = ServiceAlias.sanitizedName(name)
+        return aliases.contains { $0.name == key && $0.id != id }
+    }
 }
 
 private struct PersistedState: Codable {
+    static let currentSchema = 2
+
     var aliases: [ServiceAlias]
     var masterBroadcastEnabled: Bool
     var proxyEnabled: Bool
     var proxyPort: Int
     var launchAtLogin: Bool
+    var schemaVersion: Int?
 }

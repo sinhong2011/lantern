@@ -4,13 +4,13 @@
 
 | Version | Supported |
 |---------|-----------|
-| 0.1.x   | Yes       |
+| 0.2.x   | Yes       |
 
 ## Scope
 
 Lantern is a **local** menu bar utility:
 
-- Binds a reverse proxy on your Mac (default port 80 or 8787)
+- Binds a reverse proxy on your Mac (default port 8787; :80 opt-in)
 - Advertises Bonjour / mDNS names on your LAN
 - Exposes a **loopback-only** control API on `127.0.0.1:19247`
 

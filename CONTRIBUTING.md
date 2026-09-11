@@ -4,7 +4,7 @@ Thanks for helping improve Lantern.
 
 ## Development setup
 
-1. macOS 26+ and Xcode 26+
+1. macOS 14+ and Xcode 16+
 2. [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`)
 3. Clone and generate the project:
 

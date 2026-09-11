@@ -16,6 +16,9 @@ final class LocalProxy: @unchecked Sendable {
     private var listener: NWListener?
     private var routes: [String: Int] = [:]
     private var port: UInt16 = 80
+    /// Set only while the listener is actually ready. Used so reconcile can
+    /// update routes without tearing down and rebinding (port 80 fails often).
+    private var boundPort: UInt16?
     var onAccess: (@Sendable (AccessEvent) -> Void)?
 
     func updateRoutes(_ aliases: [ServiceAlias]) {
@@ -30,6 +33,8 @@ final class LocalProxy: @unchecked Sendable {
     }
 
     func start(port: UInt16) async throws {
+        if isBound(to: port) { return }
+
         stop()
         self.port = port
 
@@ -64,11 +69,13 @@ final class LocalProxy: @unchecked Sendable {
             }
 
             let gate = ResumeOnce(continuation)
-            listener.stateUpdateHandler = { state in
+            listener.stateUpdateHandler = { [weak self] state in
                 switch state {
                 case .ready:
+                    self?.setBoundPort(port)
                     gate.resume()
                 case .failed(let error):
+                    self?.setBoundPort(nil)
                     gate.resume(throwing: ProxyError.bindFailed(error.localizedDescription))
                 default:
                     break
@@ -79,8 +86,24 @@ final class LocalProxy: @unchecked Sendable {
     }
 
     func stop() {
-        listener?.cancel()
+        lock.lock()
+        let existing = listener
         listener = nil
+        boundPort = nil
+        lock.unlock()
+        existing?.cancel()
+    }
+
+    private func isBound(to port: UInt16) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return listener != nil && boundPort == port
+    }
+
+    private func setBoundPort(_ port: UInt16?) {
+        lock.lock()
+        boundPort = port
+        lock.unlock()
     }
 
     private func handle(_ connection: NWConnection) {
@@ -287,7 +310,7 @@ final class LocalProxy: @unchecked Sendable {
     /// Dev servers (Vite, webpack, etc.) reject unknown Host values and also
     /// honor keep-alive — so every request on the connection must look local,
     /// not just the first one.
-    fileprivate static func rewriteForUpstream(_ request: Data, localPort: Int) -> Data {
+    static func rewriteForUpstream(_ request: Data, localPort: Int) -> Data {
         let text = String(data: request, encoding: .utf8)
             ?? String(data: request, encoding: .ascii)
         guard let text else { return request }

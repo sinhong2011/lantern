@@ -9,10 +9,10 @@ struct AccessEvent: Identifiable, Sendable, Equatable {
 
         var label: String {
             switch self {
-            case .forwarded: return "ok"
-            case .unknownHost: return "unknown host"
-            case .missingHost: return "missing host"
-            case .upstreamDown: return "upstream down"
+            case .forwarded: return "Forwarded"
+            case .unknownHost: return "Unknown host"
+            case .missingHost: return "Missing host"
+            case .upstreamDown: return "Upstream down"
             }
         }
 
@@ -63,7 +63,8 @@ struct AccessEvent: Identifiable, Sendable, Equatable {
     }
 
     var copyLine: String {
-        "\(timeText) \(method) \(path) \(displayHost) \(displayClient) \(outcome.rawValue)"
+        [timeText, method, path, displayHost, displayClient, outcome.label]
+            .joined(separator: "  ")
     }
 
     func matches(alias: ServiceAlias) -> Bool {
@@ -83,7 +84,7 @@ struct AccessEvent: Identifiable, Sendable, Equatable {
             || path.lowercased().contains(q)
             || host.lowercased().contains(q)
             || (client?.lowercased().contains(q) ?? false)
-            || outcome.label.contains(q)
+            || outcome.label.lowercased().contains(q)
     }
 }
 

@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import AppKit
+import ServiceManagement
 
 @MainActor
 @Observable
@@ -27,6 +28,8 @@ final class AppModel {
     private var toastToken = UUID()
     private var didStart = false
     private var lastBoundPort: Int?
+    private var reconcileTask: Task<Void, Never>?
+    private var reconcileQueued = false
 
     var statusTint: StatusTint {
         if lastError != nil || proxyBindFailed { return .error }
@@ -54,7 +57,23 @@ final class AppModel {
         proxy.onAccess = { event in
             logs.record(event)
         }
-        Task { await reconcile() }
+        syncLaunchAtLogin()
+        scheduleReconcile()
+    }
+
+    func scheduleReconcile() {
+        if reconcileTask != nil {
+            reconcileQueued = true
+            return
+        }
+        reconcileTask = Task { [weak self] in
+            guard let self else { return }
+            repeat {
+                self.reconcileQueued = false
+                await self.reconcile()
+            } while self.reconcileQueued
+            self.reconcileTask = nil
+        }
     }
 
     func stop() {
@@ -82,10 +101,12 @@ final class AppModel {
                 proxy.updateRoutes(store.activeAliases)
                 proxyRunning = true
                 proxyBindFailed = false
+                lastError = nil
             } else {
                 proxy.stop()
                 proxyRunning = false
                 proxyBindFailed = false
+                lastError = nil
             }
         } catch {
             proxyRunning = false
@@ -107,8 +128,8 @@ final class AppModel {
         )
 
         if network.lanIPv4 != nil {
-            // Clear stale bind errors once network is healthy and sync succeeded.
-            if proxyRunning || !store.proxyEnabled {
+            // Clear stale bind errors once we are actually sharing, or no longer trying to.
+            if proxyRunning || !store.proxyEnabled || !store.masterBroadcastEnabled {
                 lastError = nil
                 proxyBindFailed = false
             }
@@ -133,7 +154,7 @@ final class AppModel {
     func setMasterBroadcast(_ enabled: Bool) {
         store.setMasterBroadcast(enabled)
         logs.recordActivity(enabled ? .broadcastOn : .broadcastOff, enabled ? "Broadcast on" : "Broadcast off")
-        Task { await reconcile() }
+        scheduleReconcile()
     }
 
     func useAlternateProxyPort(_ port: Int = 8787) {
@@ -141,10 +162,14 @@ final class AppModel {
         store.proxyPort = port
         store.save()
         showToast("Proxy moved to :\(port)")
-        Task { await reconcile() }
+        scheduleReconcile()
     }
 
     func addSampleWebService() {
+        guard !store.hasName("web") else {
+            lastError = "web.local is already used."
+            return
+        }
         let sample = ServiceAlias(
             name: "web",
             localPort: 8080,
@@ -153,7 +178,7 @@ final class AppModel {
         upsertTracked(sample, existed: false)
         expandedServiceID = sample.id
         showToast("Added web.local → localhost:8080")
-        Task { await reconcile() }
+        scheduleReconcile()
     }
 
     func showToast(_ message: String) {
@@ -170,7 +195,7 @@ final class AppModel {
     private static func friendlyProxyError(_ error: Error, port: Int) -> String {
         let raw = error.localizedDescription.lowercased()
         if port == 80 {
-            return "Can't bind port 80 (needs permission or it's busy). Use 8787 for easy LAN URLs."
+            return "This Mac can’t use a portless link (port 80 needs permission or is busy)."
         }
         if raw.contains("address already") || raw.contains("in use") || raw.contains("conflict") {
             return "Port \(port) is already in use on this Mac."
@@ -189,7 +214,7 @@ final class AppModel {
             "\(alias.hostName) \(enabled ? "on" : "off")",
             host: alias.hostName
         )
-        Task { await reconcile() }
+        scheduleReconcile()
     }
 
     func deleteAlias(_ alias: ServiceAlias) {
@@ -197,7 +222,7 @@ final class AppModel {
             expandedServiceID = nil
         }
         removeTracked(alias)
-        Task { await reconcile() }
+        scheduleReconcile()
     }
 
     func setExpandedService(_ id: UUID?) {
@@ -235,6 +260,10 @@ final class AppModel {
             lastError = "Name and port (1–65535) are required."
             return
         }
+        if store.hasName(name, except: editingAlias?.id) {
+            lastError = "\(name).local is already used."
+            return
+        }
         let wasEditing = editingAlias != nil
         let alias = ServiceAlias(
             id: editingAlias?.id ?? UUID(),
@@ -247,7 +276,7 @@ final class AppModel {
         showingAddSheet = false
         expandedServiceID = alias.id
         showToast(wasEditing ? "Updated \(alias.hostName)" : "Added \(alias.hostName)")
-        Task { await reconcile() }
+        scheduleReconcile()
     }
 
     @discardableResult
@@ -263,6 +292,63 @@ final class AppModel {
         return url
     }
 
+    @discardableResult
+    func copyLanIP() -> String? {
+        guard let ip = network.lanIPv4 else {
+            showToast("No LAN IP yet")
+            return nil
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(ip, forType: .string)
+        showToast("Copied \(ip)")
+        return ip
+    }
+
+    @discardableResult
+    func copyFallbackURL(for alias: ServiceAlias) -> String? {
+        guard let url = alias.fallbackURL(
+            lanIP: network.lanIPv4,
+            proxyPort: store.proxyPort,
+            proxyEnabled: store.proxyEnabled && proxyRunning
+        ) else {
+            showToast("No LAN IP yet")
+            return nil
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(url, forType: .string)
+        showToast("Copied \(url)")
+        return url
+    }
+
+    func applyLaunchAtLogin(_ enabled: Bool) {
+        do {
+            if enabled { try SMAppService.mainApp.register() }
+            else { try SMAppService.mainApp.unregister() }
+            store.launchAtLogin = enabled
+            store.save()
+        } catch {
+            lastError = "Couldn't update Login Items. Check System Settings → Login Items."
+            store.launchAtLogin = SMAppService.mainApp.status == .enabled
+            store.save()
+        }
+    }
+
+    func syncLaunchAtLogin() {
+        switch SMAppService.mainApp.status {
+        case .enabled:
+            store.launchAtLogin = true
+        case .requiresApproval:
+            store.launchAtLogin = true
+            lastError = "Open at Login needs approval in System Settings → Login Items."
+        default:
+            if store.launchAtLogin {
+                lastError = "Open at Login is off in System Settings → Login Items."
+            }
+            store.launchAtLogin = false
+        }
+        store.save()
+    }
+
     func openURL(for alias: ServiceAlias) {
         let urlString = alias.publicURL(
             lanIP: network.lanIPv4,
@@ -275,46 +361,50 @@ final class AppModel {
     }
 
     /// HTTP control plane for optional Raycast / scripts.
-    func handleControl(method: String, path: String, body: Data) -> [String: Any] {
+    func handleControl(method: String, path: String, body: Data) -> ControlResponse {
         let components = path.split(separator: "/").map(String.init)
 
         if method == "GET" && (path == "/status" || path == "/") {
-            return statusDictionary()
+            return .ok(statusDictionary())
         }
 
         if method == "GET" && path == "/aliases" {
-            return [
+            return .ok([
                 "ok": true,
                 "aliases": store.aliases.map(aliasDictionary),
-            ]
+            ])
         }
 
         if method == "GET" && path == "/logs" {
-            return [
+            return .ok([
                 "ok": true,
-                "events": logs.entries.prefix(100).map(logDictionary),
-            ]
+                "file": logs.fileURL.path,
+                "events": logs.entries.prefix(100).map(\.jsonObject),
+            ])
         }
 
         if method == "DELETE" && path == "/logs" {
             logs.clear()
-            return ["ok": true]
+            return .ok()
         }
 
         if method == "POST" && path == "/broadcast" {
             if let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
                let enabled = json["enabled"] as? Bool {
                 setMasterBroadcast(enabled)
-                return statusDictionary()
+                return .ok(statusDictionary())
             }
-            return ["ok": false, "error": "expected {enabled:bool}"]
+            return .error(400, "expected {enabled:bool}")
         }
 
         if method == "POST" && path == "/aliases" {
             guard let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
                   let name = json["name"] as? String,
                   let port = json["localPort"] as? Int else {
-                return ["ok": false, "error": "expected {name, localPort}"]
+                return .error(400, "expected {name, localPort}")
+            }
+            if store.hasName(name) {
+                return .error(409, "\(ServiceAlias.sanitizedName(name)).local is already used")
             }
             let alias = ServiceAlias(
                 name: name,
@@ -323,55 +413,47 @@ final class AppModel {
                 notes: (json["notes"] as? String) ?? ""
             )
             upsertTracked(alias, existed: false)
-            Task { await reconcile() }
-            return ["ok": true, "alias": aliasDictionary(alias)]
+            scheduleReconcile()
+            return .ok(["ok": true, "alias": aliasDictionary(alias)])
         }
 
         if components.count == 2 && components[0] == "aliases" {
             let idString = components[1]
             guard let id = UUID(uuidString: idString) else {
-                return ["ok": false, "error": "bad id"]
+                return .error(400, "bad id")
             }
             if method == "DELETE" {
                 if let alias = store.aliases.first(where: { $0.id == id }) {
                     removeTracked(alias)
                 }
-                Task { await reconcile() }
-                return ["ok": true]
+                scheduleReconcile()
+                return .ok()
             }
             if method == "PATCH",
                let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
                var alias = store.aliases.first(where: { $0.id == id }) {
-                if let name = json["name"] as? String { alias.name = ServiceAlias.sanitizedName(name) }
+                if let name = json["name"] as? String {
+                    let next = ServiceAlias.sanitizedName(name)
+                    if store.hasName(next, except: id) {
+                        return .error(409, "\(next).local is already used")
+                    }
+                    alias.name = next
+                }
                 if let port = json["localPort"] as? Int { alias.localPort = port }
                 if let enabled = json["enabled"] as? Bool { alias.enabled = enabled }
                 if let notes = json["notes"] as? String { alias.notes = notes }
                 upsertTracked(alias, existed: true)
-                Task { await reconcile() }
-                return ["ok": true, "alias": aliasDictionary(alias)]
+                scheduleReconcile()
+                return .ok(["ok": true, "alias": aliasDictionary(alias)])
             }
         }
 
         if method == "POST" && path == "/reconcile" {
-            Task { await reconcile() }
-            return ["ok": true]
+            scheduleReconcile()
+            return .ok()
         }
 
-        if method == "POST" && path == "/ui/edit" {
-            if let alias = store.aliases.first {
-                beginEdit(alias)
-            } else {
-                beginAdd()
-            }
-            return ["ok": true, "showingAddSheet": showingAddSheet]
-        }
-
-        if method == "POST" && path == "/ui/home" {
-            cancelDraft()
-            return ["ok": true]
-        }
-
-        return ["ok": false, "error": "not found"]
+        return .error(404, "not found")
     }
 
     private func statusDictionary() -> [String: Any] {
@@ -404,32 +486,6 @@ final class AppModel {
         logs.recordActivity(.serviceRemoved, "Removed \(alias.hostName)", host: alias.hostName)
     }
 
-    private func logDictionary(_ entry: LogEntry) -> [String: Any] {
-        switch entry {
-        case .access(let event):
-            [
-                "kind": "access",
-                "id": event.id.uuidString,
-                "at": event.at.formatted(.iso8601),
-                "method": event.method,
-                "path": event.path,
-                "host": event.host,
-                "client": event.client as Any,
-                "localPort": event.localPort as Any,
-                "outcome": event.outcome.rawValue,
-            ]
-        case .activity(let event):
-            [
-                "kind": "activity",
-                "id": event.id.uuidString,
-                "at": event.at.formatted(.iso8601),
-                "activity": event.kind.rawValue,
-                "message": event.message,
-                "host": event.host as Any,
-            ]
-        }
-    }
-
     private func aliasDictionary(_ alias: ServiceAlias) -> [String: Any] {
         [
             "id": alias.id.uuidString,
@@ -443,6 +499,11 @@ final class AppModel {
                 proxyPort: store.proxyPort,
                 proxyEnabled: store.proxyEnabled && proxyRunning
             ),
+            "ipUrl": alias.fallbackURL(
+                lanIP: network.lanIPv4,
+                proxyPort: store.proxyPort,
+                proxyEnabled: store.proxyEnabled && proxyRunning
+            ) as Any,
         ]
     }
 }

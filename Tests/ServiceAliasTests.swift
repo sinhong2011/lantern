@@ -16,5 +16,7 @@ struct ServiceAliasTests {
         let alias = ServiceAlias(name: "web", localPort: 8080)
         #expect(alias.publicURL(lanIP: "10.0.0.1", proxyPort: 80, proxyEnabled: true) == "http://web.local")
         #expect(alias.publicURL(lanIP: "10.0.0.1", proxyPort: 8787, proxyEnabled: true) == "http://web.local:8787")
+        #expect(alias.fallbackURL(lanIP: "10.0.0.1", proxyPort: 8787, proxyEnabled: true) == "http://10.0.0.1:8787")
+        #expect(alias.fallbackURL(lanIP: nil, proxyPort: 8787, proxyEnabled: true) == nil)
     }
 }

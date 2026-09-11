@@ -6,6 +6,8 @@ struct MenuPanelView: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pulse = false
+    @State private var copiedLanIP = false
+    @State private var networkChipHover = false
 
     var body: some View {
         Group {
@@ -42,7 +44,7 @@ struct MenuPanelView: View {
             }
         }
         .onChange(of: model.network.lanIPv4) { _, _ in
-            Task { await model.reconcile() }
+            model.scheduleReconcile()
         }
     }
 
@@ -75,39 +77,80 @@ struct MenuPanelView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
-            Image("MenuBarIcon")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 18, height: 18)
-                .foregroundStyle(LanternTheme.accent)
-                .frame(width: 22)
-
-            VStack(alignment: .leading, spacing: 1) {
+        HStack(alignment: .center, spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Lantern")
-                    .font(.system(size: 13, weight: .semibold))
-                Text(model.network.statusLabel)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .font(.system(size: 14, weight: .semibold))
+                    .tracking(-0.2)
+                networkChip
             }
 
             Spacer(minLength: 8)
 
-            Toggle("", isOn: Binding(
+            Toggle("Broadcast", isOn: Binding(
                 get: { model.store.masterBroadcastEnabled },
                 set: { model.setMasterBroadcast($0) }
             ))
-            .toggleStyle(.switch)
+            .toggleStyle(BroadcastBeaconStyle())
             .labelsHidden()
-            .controlSize(.small)
-            .tint(LanternTheme.accent)
-            .accessibilityLabel("Broadcast")
-            .help(model.store.masterBroadcastEnabled ? "Broadcasting on LAN" : "Broadcast off")
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 4)
+        .padding(.horizontal, 2)
+        .padding(.vertical, 2)
+    }
+
+    private var networkChip: some View {
+        let ip = model.network.lanIPv4
+        let canCopy = ip != nil
+        return Button {
+            guard model.copyLanIP() != nil else { return }
+            copiedLanIP = true
+            Task {
+                try? await Task.sleep(for: .milliseconds(1200))
+                copiedLanIP = false
+            }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: copiedLanIP ? "checkmark" : model.network.linkKind.symbolName)
+                    .font(.system(size: 8.5, weight: .bold))
+                    .symbolRenderingMode(.monochrome)
+                    .contentTransition(reduceMotion ? .opacity : .symbolEffect(.replace))
+                    .frame(width: 12)
+
+                if copiedLanIP {
+                    Text("Copied")
+                        .font(.system(size: 10.5, weight: .medium))
+                } else if let ip {
+                    Text(ip)
+                        .font(.system(size: 10.5, weight: .medium, design: .monospaced))
+                        .monospacedDigit()
+                    if let name = model.network.interfaceName {
+                        Text(name)
+                            .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Color.primary.opacity(0.08), in: Capsule())
+                    }
+                } else {
+                    Text(model.network.statusLabel)
+                        .font(.system(size: 10.5, weight: .medium))
+                }
+            }
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3.5)
+            .background(
+                Color.primary.opacity(networkChipHover && canCopy ? 0.11 : 0.06),
+                in: Capsule()
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(!canCopy)
+        .onHover { networkChipHover = $0 }
+        .help(canCopy ? "Copy LAN address" : model.network.statusLabel)
+        .accessibilityLabel(ip.map { "LAN address \($0)" } ?? model.network.statusLabel)
+        .accessibilityHint(canCopy ? "Copies the address" : "")
+        .animation(.easeOut(duration: 0.12), value: copiedLanIP)
     }
 
     private func errorBanner(_ error: String) -> some View {
@@ -116,7 +159,7 @@ struct MenuPanelView: View {
                 .font(.system(size: 12))
                 .fixedSize(horizontal: false, vertical: true)
             if model.canSuggestAlternateProxyPort {
-                Button("Use backup link style (:8787)") {
+                Button("Keep sharing without port 80") {
                     model.useAlternateProxyPort(8787)
                 }
                 .font(.system(size: 12, weight: .semibold))
