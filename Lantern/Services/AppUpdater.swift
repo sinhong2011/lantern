@@ -47,12 +47,13 @@ final class AppUpdater {
     }
 }
 
-private final class UpdatePresenter: NSObject, @MainActor SPUStandardUserDriverDelegate {
+@MainActor
+private final class UpdatePresenter: NSObject, SPUStandardUserDriverDelegate {
     var supportsGentleScheduledUpdateReminders: Bool { true }
 
     func standardUserDriverWillHandleShowingUpdate(
         _ handleShowingUpdate: Bool,
-        for update: SUAppcastItem,
+        forUpdate update: SUAppcastItem,
         state: SPUUserUpdateState
     ) {
         NSApp.setActivationPolicy(.regular)

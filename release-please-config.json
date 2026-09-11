@@ -5,6 +5,7 @@
       "package-name": "lantern",
       "release-type": "simple",
       "include-v-in-tag": true,
+      "include-component-in-tag": false,
       "bump-minor-pre-major": true,
       "changelog-path": "CHANGELOG.md",
       "extra-files": [
