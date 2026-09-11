@@ -6,6 +6,7 @@ struct ServiceRowView: View {
     let alias: ServiceAlias
     @State private var confirmDelete = false
     @State private var copied = false
+    @State private var copiedIP = false
 
     private var isLive: Bool {
         alias.enabled && model.store.masterBroadcastEnabled
@@ -13,6 +14,10 @@ struct ServiceRowView: View {
 
     private var isExpanded: Bool {
         model.expandedServiceID == alias.id
+    }
+
+    private var recentHits: [AccessEvent] {
+        model.logs.recent(for: alias, limit: 3)
     }
 
     private var publicURL: String {
@@ -65,24 +70,14 @@ struct ServiceRowView: View {
                 }
             } label: {
                 HStack(spacing: 10) {
-                    Image(systemName: "network")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(isLive ? LanternTheme.accent : .secondary)
-                        .frame(width: 20)
+                    serviceMark
 
                     VStack(alignment: .leading, spacing: 1) {
-                        HStack(spacing: 6) {
-                            Text(alias.notes.isEmpty ? alias.hostName : alias.notes)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-                            if isLive {
-                                Circle()
-                                    .fill(LanternTheme.live)
-                                    .frame(width: 6, height: 6)
-                            }
-                        }
-                        Text(shortURL)
+                        Text(alias.notes.isEmpty ? alias.hostName : alias.notes)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                        subtitle
                             .font(.system(size: 10, design: .monospaced))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -93,8 +88,11 @@ struct ServiceRowView: View {
                 }
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MenuRowPressStyle())
             .help(isExpanded ? "Collapse" : "Expand")
+            .accessibilityLabel(rowAccessibilityLabel)
+
+            localPortChip
 
             Toggle("", isOn: Binding(
                 get: { alias.enabled },
@@ -117,15 +115,107 @@ struct ServiceRowView: View {
                     .frame(width: 16, height: 22)
                     .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MenuRowPressStyle())
             .help(isExpanded ? "Collapse" : "Expand")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
     }
 
+    /// Control Center / Settings glyph well — filled when on the LAN, never a floating accent icon.
+    private var serviceMark: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(isLive ? LanternTheme.live : Color.primary.opacity(0.08))
+            if isLive {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.28), lineWidth: 0.5)
+            }
+            Image(systemName: "network")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(isLive ? Color.white : Color.secondary)
+                .symbolRenderingMode(.monochrome)
+        }
+        .frame(width: 24, height: 24)
+        .animation(
+            reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.28, dampingFraction: 1),
+            value: isLive
+        )
+        .accessibilityHidden(true)
+    }
+
+    private var localPortChip: some View {
+        Text(":\(alias.localPort)")
+            .font(.system(size: 11, weight: .semibold, design: .monospaced))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(Color.primary.opacity(0.07), in: Capsule())
+            .help("This Mac’s port")
+            .accessibilityLabel("Local port \(alias.localPort)")
+    }
+
+    private var rowAccessibilityLabel: String {
+        let title = alias.notes.isEmpty ? alias.hostName : alias.notes
+        return isLive ? "\(title), port \(alias.localPort), broadcasting" : "\(title), port \(alias.localPort)"
+    }
+
+    @ViewBuilder
+    private var subtitle: some View {
+        if model.logs.lastHit(for: alias) != nil {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Text(isJustNow(at: context.date) ? "just now" : shortURL)
+            }
+        } else {
+            Text(shortURL)
+        }
+    }
+
+    private func isJustNow(at date: Date) -> Bool {
+        guard let last = model.logs.lastHit(for: alias) else { return false }
+        return date.timeIntervalSince(last) < 10
+    }
+
+    private var recentHitsBlock: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if recentHits.isEmpty {
+                Text("No requests yet")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(recentHits) { event in
+                    HStack(spacing: 8) {
+                        Text(event.method)
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundStyle(event.outcome.isFailure ? LanternTheme.danger : LanternTheme.accent)
+                            .frame(width: 36, alignment: .leading)
+                        Text(event.outcome.isFailure ? event.outcome.label : event.path)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(event.outcome.isFailure ? LanternTheme.danger : .primary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        Spacer(minLength: 4)
+                        Text(event.timeText)
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+        .padding(.top, 4)
+        .padding(.bottom, 6)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(recentHits.isEmpty ? "No requests yet" : "\(recentHits.count) recent requests")
+    }
+
     private var expandedBody: some View {
         VStack(spacing: 0) {
+            recentHitsBlock
+
             divider
 
             LanternMenuRow(
@@ -154,6 +244,23 @@ struct ServiceRowView: View {
 
             divider.padding(.leading, 40)
 
+            if let ipURL = fallbackURL {
+                LanternMenuRow(
+                    title: copiedIP ? "Copied LAN Address" : "Copy LAN Address",
+                    symbol: copiedIP ? "checkmark" : "antenna.radiowaves.left.and.right",
+                    detail: ipURL.replacingOccurrences(of: "http://", with: ""),
+                    chevron: false
+                ) {
+                    model.copyFallbackURL(for: alias)
+                    copiedIP = true
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(1200))
+                        copiedIP = false
+                    }
+                }
+                divider.padding(.leading, 40)
+            }
+
             LanternMenuRow(title: "Edit Service", symbol: "slider.horizontal.3") {
                 model.beginEdit(alias)
             }
@@ -167,6 +274,14 @@ struct ServiceRowView: View {
         }
     }
 
+    private var fallbackURL: String? {
+        alias.fallbackURL(
+            lanIP: model.network.lanIPv4,
+            proxyPort: model.store.proxyPort,
+            proxyEnabled: model.store.proxyEnabled && model.proxyRunning
+        )
+    }
+
     private var shortURL: String {
         publicURL
             .replacingOccurrences(of: "http://", with: "")
@@ -177,5 +292,14 @@ struct ServiceRowView: View {
         Rectangle()
             .fill(Color.primary.opacity(0.07))
             .frame(height: 1)
+    }
+}
+
+/// Menu-item press: a light wash on pointer-down, not the default macOS blue highlight.
+private struct MenuRowPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.72 : 1)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }

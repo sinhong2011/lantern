@@ -26,7 +26,7 @@ struct LanternApp: App {
                 .environment(updater)
         }
         .windowResizability(.contentSize)
-        .defaultSize(width: 660, height: 460)
+        .defaultSize(width: 560, height: 480)
     }
 
     private var panelHeight: CGFloat {

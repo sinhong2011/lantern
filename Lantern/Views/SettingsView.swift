@@ -1,16 +1,15 @@
 import AppKit
-import ServiceManagement
 import SwiftUI
 
 private enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
-    case general, easyURLs, advanced, about
+    case general, logs, advanced, about
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .general: return "General"
-        case .easyURLs: return "Easy URLs"
+        case .logs: return "Logs"
         case .advanced: return "Advanced"
         case .about: return "About"
         }
@@ -19,217 +18,266 @@ private enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
     var symbol: String {
         switch self {
         case .general: return "gearshape"
-        case .easyURLs: return "link"
+        case .logs: return "list.bullet.rectangle"
         case .advanced: return "terminal"
         case .about: return "info.circle"
         }
     }
 }
 
-private enum URLMode: Hashable {
-    case portless
-    case backup
-}
-
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
     @Environment(AppUpdater.self) private var updater
-    @State private var selection: SettingsPane? = .easyURLs
+    @State private var selection: SettingsPane = .general
     @State private var copiedEndpoint = false
+    @State private var copiedToken = false
     private let endpoint = "http://127.0.0.1:19247"
 
     var body: some View {
-        NavigationSplitView {
-            List(SettingsPane.allCases, selection: $selection) { pane in
-                Label(pane.title, systemImage: pane.symbol)
-                    .tag(pane)
-            }
-            .listStyle(.sidebar)
-            .navigationSplitViewColumnWidth(min: 168, ideal: 188, max: 220)
-        } detail: {
-            detailPane
+        TabView(selection: $selection) {
+            settingsPage { generalPane }
+                .tabItem { Label(SettingsPane.general.title, systemImage: SettingsPane.general.symbol) }
+                .tag(SettingsPane.general)
+
+            settingsPage(scrolls: false) { LogsSettingsView() }
+                .tabItem { Label(SettingsPane.logs.title, systemImage: SettingsPane.logs.symbol) }
+                .tag(SettingsPane.logs)
+
+            settingsPage { advancedPane }
+                .tabItem { Label(SettingsPane.advanced.title, systemImage: SettingsPane.advanced.symbol) }
+                .tag(SettingsPane.advanced)
+
+            settingsPage { aboutPane }
+                .tabItem { Label(SettingsPane.about.title, systemImage: SettingsPane.about.symbol) }
+                .tag(SettingsPane.about)
         }
-        .navigationSplitViewStyle(.balanced)
-        .frame(minWidth: 640, idealWidth: 680, minHeight: 440, idealHeight: 480)
+        .frame(width: 560, height: 480)
+    }
+
+    private func settingsPage<Content: View>(
+        scrolls: Bool = true,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        Group {
+            if scrolls {
+                ScrollView {
+                    content()
+                        .padding(20)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            } else {
+                content()
+                    .padding(20)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+        }
+        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     @ViewBuilder
-    private var detailPane: some View {
-        switch selection ?? .easyURLs {
-        case .general:
-            SettingsDetail(title: "General", symbol: SettingsPane.general.symbol) {
-                settingsCard {
-                    toggleRow(
-                        title: "Open at Login",
-                        subtitle: "Start Lantern automatically when you log in."
-                    ) {
-                        Toggle("", isOn: Binding(
-                            get: { model.store.launchAtLogin },
-                            set: { enabled in
-                                model.store.launchAtLogin = enabled
-                                model.store.save()
-                                try? setLaunchAtLogin(enabled)
-                            }
-                        ))
-                        .toggleStyle(.switch)
-                        .labelsHidden()
-                        .tint(LanternTheme.accent)
-                    }
-                }
-
-                settingsCard {
-                    toggleRow(
-                        title: "Check for Updates Automatically",
-                        subtitle: "Looks for a new GitHub Release about once a day."
-                    ) {
-                        Toggle("", isOn: Binding(
-                            get: { updater.automaticallyChecksForUpdates },
-                            set: { updater.automaticallyChecksForUpdates = $0 }
-                        ))
-                        .toggleStyle(.switch)
-                        .labelsHidden()
-                        .tint(LanternTheme.accent)
-                    }
+    private var generalPane: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            settingsCard {
+                toggleRow(
+                    title: "Open at Login",
+                    subtitle: "Start Lantern automatically when you log in."
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { model.store.launchAtLogin },
+                        set: { model.applyLaunchAtLogin($0) }
+                    ))
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .tint(LanternTheme.accent)
                 }
             }
-        case .easyURLs:
-            SettingsDetail(title: "Easy URLs", symbol: SettingsPane.easyURLs.symbol) {
-                settingsCard {
-                    toggleRow(
-                        title: "Hide the port in the URL",
-                        subtitle: "Share http://\(exampleHost) — no port to type."
-                    ) {
-                        Toggle("", isOn: Binding(
-                            get: { model.store.proxyEnabled },
-                            set: {
-                                model.store.proxyEnabled = $0
-                                model.store.save()
-                                Task { await model.reconcile() }
-                            }
-                        ))
-                        .toggleStyle(.switch)
-                        .labelsHidden()
-                        .tint(LanternTheme.accent)
-                    }
-                }
 
-                if model.store.proxyEnabled {
-                    settingsCard(title: "Link style") {
-                        VStack(alignment: .leading, spacing: 10) {
-                            modeRow(
-                                title: "No port",
-                                subtitle: "http://name.local",
-                                selected: urlMode == .portless
-                            ) {
-                                applyURLMode(.portless)
-                            }
-                            Divider().opacity(0.35)
-                            modeRow(
-                                title: "Backup port",
-                                subtitle: "http://name.local:8787 — if port 80 is blocked",
-                                selected: urlMode == .backup
-                            ) {
-                                applyURLMode(.backup)
-                            }
+            settingsCard {
+                toggleRow(
+                    title: "Check for Updates Automatically",
+                    subtitle: "Looks for a new GitHub Release about once a day."
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { updater.automaticallyChecksForUpdates },
+                        set: { updater.automaticallyChecksForUpdates = $0 }
+                    ))
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .tint(LanternTheme.accent)
+                }
+            }
+
+            settingsCard {
+                toggleRow(
+                    title: "Share one LAN name",
+                    subtitle: "Phones open http://\(exampleHost) instead of each app’s own port."
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { model.store.proxyEnabled },
+                        set: {
+                            model.store.proxyEnabled = $0
+                            model.store.save()
+                            model.scheduleReconcile()
                         }
-                    }
-
-                    settingsCard(title: "Example") {
-                        Text(verbatim: exampleURL)
-                            .font(.system(.body, design: .monospaced))
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
+                    ))
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .tint(LanternTheme.accent)
                 }
+            }
 
-                settingsCard(title: "Status") {
+            settingsCard(title: "What others open") {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(verbatim: shareURL)
+                        .font(.system(.body, design: .monospaced))
+                        .textSelection(.enabled)
+                    Text(shareExplanation)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if model.store.proxyEnabled && model.store.proxyPort != 80 && !model.canSuggestAlternateProxyPort {
+                        Button("Try a portless link") {
+                            model.useAlternateProxyPort(80)
+                        }
+                        .buttonStyle(.link)
+                    }
                     HStack {
                         Text("Right now")
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text(friendlyProxyStatus)
                             .foregroundStyle(proxyStatusColor)
-                            .multilineTextAlignment(.trailing)
                     }
+                    .font(.system(size: 12))
                     if model.canSuggestAlternateProxyPort {
-                        Divider().opacity(0.35)
-                        Button("Port 80 blocked — use backup links") {
+                        Button("Keep sharing without port 80") {
                             model.useAlternateProxyPort(8787)
                         }
                         .buttonStyle(.link)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-        case .advanced:
-            SettingsDetail(title: "Advanced", symbol: SettingsPane.advanced.symbol) {
-                settingsCard(title: "Control API") {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(verbatim: endpoint)
-                            .font(.system(.body, design: .monospaced))
-                            .textSelection(.enabled)
-                        Text("Loopback only. For scripts.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Button {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(endpoint, forType: .string)
-                            copiedEndpoint = true
-                            model.showToast("Copied control API endpoint")
-                            Task {
-                                try? await Task.sleep(for: .seconds(1.2))
-                                copiedEndpoint = false
-                            }
-                        } label: {
-                            Label(
-                                copiedEndpoint ? "Copied" : "Copy endpoint",
-                                systemImage: copiedEndpoint ? "checkmark" : "doc.on.doc"
-                            )
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-        case .about:
-            SettingsDetail(title: "About", symbol: SettingsPane.about.symbol) {
-                settingsCard {
-                    VStack(spacing: 10) {
-                        Image("LanternLogo")
-                            .resizable()
-                            .interpolation(.high)
-                            .scaledToFit()
-                            .frame(width: 128, height: 128)
-                            .shadow(color: .black.opacity(0.22), radius: 12, y: 5)
-                            .accessibilityLabel("Lantern")
-                        Text("Lantern")
-                            .font(.system(size: 18, weight: .semibold))
-                        Text("Portless LAN names for local apps")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.bottom, 4)
+        }
+    }
 
-                    Divider().opacity(0.35)
-                    infoRow("Version", AppVersion.display)
-                    Divider().opacity(0.35)
-                    infoRow("LAN", model.network.statusLabel)
-                    Divider().opacity(0.35)
-                    infoRow("Broadcast", model.store.masterBroadcastEnabled ? "On" : "Off")
-                    Divider().opacity(0.35)
-                    infoRow("Services", "\(model.store.aliases.count)")
-                    Divider().opacity(0.35)
+    private var advancedPane: some View {
+        settingsCard(title: "Control API") {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(verbatim: endpoint)
+                    .font(.system(.body, design: .monospaced))
+                    .textSelection(.enabled)
+                Text("127.0.0.1 only. Writes need \(ControlToken.headerName).")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(ControlToken.current())
+                    .font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
                     Button {
-                        updater.checkForUpdates()
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(endpoint, forType: .string)
+                        copiedEndpoint = true
+                        model.showToast("Copied control API endpoint")
+                        Task {
+                            try? await Task.sleep(for: .seconds(1.2))
+                            copiedEndpoint = false
+                        }
                     } label: {
-                        Label("Check for Updates…", systemImage: "arrow.triangle.2.circlepath")
+                        Label(
+                            copiedEndpoint ? "Copied" : "Copy endpoint",
+                            systemImage: copiedEndpoint ? "checkmark" : "doc.on.doc"
+                        )
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .disabled(!updater.canCheckForUpdates)
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(ControlToken.current(), forType: .string)
+                        copiedToken = true
+                        model.showToast("Copied control token")
+                        Task {
+                            try? await Task.sleep(for: .seconds(1.2))
+                            copiedToken = false
+                        }
+                    } label: {
+                        Label(
+                            copiedToken ? "Copied" : "Copy token",
+                            systemImage: copiedToken ? "checkmark" : "key"
+                        )
+                    }
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var aboutPane: some View {
+        settingsCard {
+            VStack(spacing: 10) {
+                Image("LanternLogo")
+                    .resizable()
+                    .interpolation(.high)
+                    .scaledToFit()
+                    .frame(width: 96, height: 96)
+                    .shadow(color: .black.opacity(0.22), radius: 12, y: 5)
+                    .accessibilityLabel("Lantern")
+                Text("Lantern")
+                    .font(.system(size: 18, weight: .semibold))
+                Text("Portless LAN names for local apps")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, 4)
+
+            Divider().opacity(0.35)
+            infoRow("Version", AppVersion.display)
+            Divider().opacity(0.35)
+            infoRow("Author", LanternLinks.authorName)
+            Divider().opacity(0.35)
+            Button {
+                NSWorkspace.shared.open(LanternLinks.author)
+            } label: {
+                HStack {
+                    Text("GitHub").foregroundStyle(.secondary)
+                    Spacer()
+                    Text(LanternLinks.authorHandle)
+                        .fontWeight(.medium)
+                }
+                .font(.system(size: 13))
+            }
+            .buttonStyle(.plain)
+            Divider().opacity(0.35)
+            Button {
+                NSWorkspace.shared.open(LanternLinks.repo)
+            } label: {
+                HStack {
+                    Text("Repository").foregroundStyle(.secondary)
+                    Spacer()
+                    Text(LanternLinks.repoLabel)
+                        .fontWeight(.medium)
+                        .lineLimit(1)
+                }
+                .font(.system(size: 13))
+            }
+            .buttonStyle(.plain)
+            Divider().opacity(0.35)
+            infoRow("LAN", model.network.statusLabel)
+            Divider().opacity(0.35)
+            infoRow("Broadcast", model.store.masterBroadcastEnabled ? "On" : "Off")
+            Divider().opacity(0.35)
+            infoRow("Services", "\(model.store.aliases.count)")
+            Divider().opacity(0.35)
+            Button {
+                updater.checkForUpdates()
+            } label: {
+                Label("Check for Updates…", systemImage: "arrow.triangle.2.circlepath")
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .disabled(!updater.canCheckForUpdates)
         }
     }
 
@@ -278,34 +326,6 @@ struct SettingsView: View {
         }
     }
 
-    private func modeRow(
-        title: String,
-        subtitle: String,
-        selected: Bool,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(selected ? LanternTheme.accent : .secondary)
-                    .padding(.top, 1)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.primary)
-                    Text(subtitle)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 0)
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
     private func infoRow(_ title: String, _ value: String) -> some View {
         HStack {
             Text(title).foregroundStyle(.secondary)
@@ -317,35 +337,41 @@ struct SettingsView: View {
         .font(.system(size: 13))
     }
 
-    private var urlMode: URLMode {
-        model.store.proxyPort == 80 ? .portless : .backup
-    }
-
-    private func applyURLMode(_ mode: URLMode) {
-        model.store.proxyPort = mode == .portless ? 80 : 8787
-        model.store.save()
-        Task { await model.reconcile() }
-    }
-
     private var exampleHost: String {
         "\(model.store.aliases.first?.name ?? "myapp").local"
     }
 
-    private var exampleURL: String {
-        if !model.store.proxyEnabled {
-            let port = model.store.aliases.first?.localPort ?? 8080
-            return "http://\(exampleHost)\(LanternTheme.portText(port))"
+    private var shareURL: String {
+        if let alias = model.store.aliases.first {
+            return alias.publicURL(
+                lanIP: model.network.lanIPv4,
+                proxyPort: model.store.proxyPort,
+                proxyEnabled: model.store.proxyEnabled
+            )
         }
-        return urlMode == .portless ? "http://\(exampleHost)" : "http://\(exampleHost):8787"
+        if model.store.proxyEnabled {
+            return model.store.proxyPort == 80 ? "http://\(exampleHost)" : "http://\(exampleHost):\(model.store.proxyPort)"
+        }
+        return "http://\(exampleHost):8080"
+    }
+
+    private var shareExplanation: String {
+        if !model.store.proxyEnabled {
+            return "Each app keeps its own port in the link."
+        }
+        if model.store.proxyPort == 80 {
+            return "No port to type — this is the default web address on a LAN."
+        }
+        return "The number is Lantern’s door on this Mac, not the app’s port. Every service uses this same address."
     }
 
     private var friendlyProxyStatus: String {
-        if !model.store.proxyEnabled { return "Off — URLs include each app’s port" }
+        if !model.store.proxyEnabled { return "Off — each app uses its own port" }
         if model.proxyRunning {
-            return urlMode == .portless ? "Ready — portless links work" : "Ready — use :8787 links"
+            return model.store.proxyPort == 80 ? "Ready" : "Ready — same name for every app"
         }
         if model.proxyBindFailed {
-            return urlMode == .portless ? "Port 80 blocked" : "Couldn’t start on 8787"
+            return model.store.proxyPort == 80 ? "Portless links blocked on this Mac" : "Couldn’t start sharing"
         }
         if !model.store.masterBroadcastEnabled { return "Turn on Broadcast in the menu" }
         return "Waiting…"
@@ -355,37 +381,5 @@ struct SettingsView: View {
         if model.proxyRunning { return LanternTheme.live }
         if model.proxyBindFailed { return LanternTheme.danger }
         return .secondary
-    }
-
-    private func setLaunchAtLogin(_ enabled: Bool) throws {
-        if enabled { try SMAppService.mainApp.register() }
-        else { try SMAppService.mainApp.unregister() }
-    }
-}
-
-private struct SettingsDetail<Content: View>: View {
-    let title: String
-    let symbol: String
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(spacing: 8) {
-                    Image(systemName: symbol)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(LanternTheme.accent)
-                    Text(title)
-                        .font(.system(size: 20, weight: .semibold))
-                    Spacer()
-                }
-
-                content
-            }
-            .padding(24)
-            .frame(maxWidth: 520, alignment: .leading)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-        }
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 }

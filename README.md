@@ -43,11 +43,12 @@ No changes required in the target project — Lantern rewrites `Host` to localho
 - Menu bar only (no Dock icon)
 - Pick listening ports from a live list
 - Edit / remove services
-- Portless URLs via reverse proxy (port 80, or backup 8787)
+- Easy LAN URLs via reverse proxy (default :8787; :80 opt-in)
 - Host-header rewrite for picky dev servers
 - Sparkle updates from GitHub Releases
 - Loopback Control API for scripts
-- Settings sidebar (“Easy URLs”)
+- Settings (General / Logs / Advanced / About)
+- Access + activity log (menu row, Settings → Logs, `logs.jsonl`, Console.app)
 
 ## Requirements
 
@@ -103,25 +104,34 @@ Local `make run` / `make dist` stay ad-hoc and unsigned.
 3. **Add Service** — pick a listening port (or type one)  
 4. On another device on the same Wi‑Fi, open the URL (e.g. `http://myapp.local`)
 
-**Easy URLs** (Settings):
-
-- **No port (recommended)** → `http://name.local` (needs bind on :80)  
-- **Backup :8787** → `http://name.local:8787` if port 80 is blocked  
+**Easy URLs** (Settings → General): share one LAN name for every app.  
+True `http://name.local` needs port 80; if this Mac can’t bind it, the same name uses Lantern’s door (`:8787`) instead of each app’s port.  
+Copy the LAN IP from a service row if `.local` does not resolve.
 
 ## Control API
 
-Loopback only: `http://127.0.0.1:19247`
+Loopback only: `http://127.0.0.1:19247`  
+Writes need `X-Lantern-Token` from `~/Library/Application Support/Lantern/control-token`.
 
 ```bash
+TOKEN=$(cat "$HOME/Library/Application Support/Lantern/control-token")
 curl -s http://127.0.0.1:19247/status | jq
 curl -s http://127.0.0.1:19247/aliases | jq
 curl -s -X POST http://127.0.0.1:19247/broadcast \
+  -H "X-Lantern-Token: $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"enabled":true}'
 curl -s -X POST http://127.0.0.1:19247/aliases \
+  -H "X-Lantern-Token: $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"name":"web","localPort":8080}'
+curl -s http://127.0.0.1:19247/logs | jq
+curl -s -X DELETE http://127.0.0.1:19247/logs \
+  -H "X-Lantern-Token: $TOKEN"
 ```
+
+JSONL file: `~/Library/Application Support/Lantern/logs.jsonl`  
+Console.app: filter `subsystem:app.lantern` (`proxy` or `app`).
 
 ## Architecture
 
@@ -131,6 +141,7 @@ MenuBarExtra UI
   ├── BroadcastEngine     DNS-SD / dns-sd -P  → name.local → LAN IP
   ├── LocalProxy          :80/:8787  Host-based reverse proxy
   ├── PortDiscovery       lsof listening TCP ports
+  ├── AccessLogStore      logs.jsonl + session ring + os.Logger
   ├── ControlServer       127.0.0.1:19247 JSON API
   └── AppUpdater          Sparkle → GitHub Releases appcast
 ```
