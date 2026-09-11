@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/sinhong2011/lantern/compare/v0.2.2...v0.3.0) (2026-09-11)
+
+
+### Features
+
+* access logs, locked Control API, and sharing UI ([69cc7c3](https://github.com/sinhong2011/lantern/commit/69cc7c30fcc0be0d6fd90ef44dcfd07a1c1e6e77))
+* add session access and activity logs ([fc1cb4b](https://github.com/sinhong2011/lantern/commit/fc1cb4b43e9947d22a3ac139d00b106d61717640))
+* lock down the Control API and polish LAN sharing ([785c281](https://github.com/sinhong2011/lantern/commit/785c281a7bbb7a91a9dc5dc1a4e69c35a54eccd0))
+
+
+### Bug Fixes
+
+* skip menu-bar e2e on GitHub Actions runners ([f2cd0b3](https://github.com/sinhong2011/lantern/commit/f2cd0b3846abfad8f224634fa21cbebc76db9eed))
+
 ## [0.2.2](https://github.com/sinhong2011/lantern/compare/v0.2.1...v0.2.2) (2026-09-11)
 
 
