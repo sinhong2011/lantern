@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2](https://github.com/sinhong2011/lantern/compare/v0.2.1...v0.2.2) (2026-09-11)
+
+
+### Bug Fixes
+
+* hide :80 from portless URLs and drop Probus examples ([a5881f3](https://github.com/sinhong2011/lantern/commit/a5881f37f11a0156ef8f31edd47c8101331ba205))
+* hide :80 from portless URLs and drop the hardcoded Probus example ([caa9849](https://github.com/sinhong2011/lantern/commit/caa984990bfe57ea6e4153014d36e39f6244aebc))
+
 ## [0.2.1](https://github.com/sinhong2011/lantern/compare/v0.2.0...v0.2.1) (2026-09-11)
 
 
