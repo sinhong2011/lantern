@@ -7,6 +7,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP="${1:?path to Lantern.app}"
 TAG="${2:?git tag, e.g. v0.2.0}"
+[[ "$TAG" == v* ]] || TAG="v$TAG"
 REPO="${GITHUB_REPOSITORY:-sinhong2011/lantern}"
 OUT="$ROOT/dist/updates"
 SPARKLE_VERSION="${SPARKLE_VERSION:-2.9.6}"
@@ -28,7 +29,8 @@ if command -v gh >/dev/null 2>&1; then
   gh release view "$TAG" --repo "$REPO" --json body --jq .body > "$OUT/Lantern.md" || true
 fi
 
-ditto -c -k --keepParent "$APP" "$OUT/Lantern.zip"
+ZIP_NAME="Lantern-${TAG}.zip"
+ditto -c -k --keepParent "$APP" "$OUT/$ZIP_NAME"
 
 TOOLS="$ROOT/build/sparkle-tools"
 if [[ ! -x "$TOOLS/bin/generate_appcast" ]]; then
@@ -47,4 +49,4 @@ printf '%s\n' "$SPARKLE_ED_PRIVATE_KEY" | "$TOOLS/bin/generate_appcast" \
   -o "$OUT/appcast.xml" \
   "$OUT"
 
-echo "Wrote $OUT/Lantern.zip and $OUT/appcast.xml"
+echo "Wrote $OUT/$ZIP_NAME and $OUT/appcast.xml"

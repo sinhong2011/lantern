@@ -76,7 +76,7 @@ Lantern uses [Sparkle](https://sparkle-project.org) against GitHub Releases.
 - Settings → About: **Check for Updates…**
 - Feed: `https://github.com/sinhong2011/lantern/releases/latest/download/appcast.xml`
 
-Releases are cut by [release-please](https://github.com/googleapis/release-please) from [conventional commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `feat!:`). Merging the Release PR tags `vX.Y.Z`; CI then Developer ID–signs, notarizes, staples, and attaches `Lantern.dmg` (first run), `Lantern.zip` + `appcast.xml` (Sparkle).
+Releases are cut by [release-please](https://github.com/googleapis/release-please) from [conventional commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `feat!:`). Merging the Release PR tags `vX.Y.Z`; CI then Developer ID–signs, notarizes, staples, and attaches `Lantern-vX.Y.Z.dmg` (first run; also `Lantern.dmg` for the latest-download URL), `Lantern-vX.Y.Z.zip` + `appcast.xml` (Sparkle).
 
 Notarized CI needs these GitHub secrets (Team API key — individual keys cannot call notarytool):
 

@@ -8,7 +8,8 @@
 # Developer ID cert must already be in the default keychain
 # (apple-actions/import-codesign-certs in CI).
 #
-# Writes: dist/notarized/Lantern.app
+# Writes: dist/notarized/Lantern.app and dist/notarized/Lantern-<tag>.dmg
+# Optional env: TAG_NAME (e.g. v0.2.0). Falls back to version.txt.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -113,9 +114,17 @@ echo "Notarized app: $APP"
 
 # First-run download: UDZO image with an Applications drop target.
 # Sparkle still ships the zip; the DMG is notarized separately.
+TAG="${TAG_NAME:-}"
+if [[ -z "$TAG" && -f "$ROOT/version.txt" ]]; then
+  TAG="v$(tr -d '[:space:]' < "$ROOT/version.txt")"
+fi
+[[ -n "$TAG" ]] || TAG="dev"
+[[ "$TAG" == v* ]] || TAG="v$TAG"
+STEM="Lantern-${TAG}"
+
 STAGE="$ROOT/build/dmg-root"
-DMG="$EXPORT_DIR/Lantern.dmg"
-rm -rf "$STAGE" "$DMG"
+DMG="$EXPORT_DIR/${STEM}.dmg"
+rm -rf "$STAGE" "$DMG" "$EXPORT_DIR/Lantern.dmg"
 mkdir -p "$STAGE"
 ditto "$APP" "$STAGE/Lantern.app"
 ln -s /Applications "$STAGE/Applications"
@@ -137,5 +146,8 @@ xcrun notarytool submit "$DMG" \
 
 xcrun stapler staple "$DMG"
 xcrun stapler validate "$DMG"
+
+# Stable name so README can use /releases/latest/download/Lantern.dmg
+ditto "$DMG" "$EXPORT_DIR/Lantern.dmg"
 
 echo "Notarized DMG: $DMG"
