@@ -96,7 +96,7 @@ jobs:
             dist/notarized/Lantern.app \
             "$TAG_NAME"
 
-      - name: Attach zip and appcast
+      - name: Attach zip, dmg, and appcast
         env:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
@@ -104,4 +104,5 @@ jobs:
           gh release upload "$TAG_NAME" \
             dist/updates/Lantern.zip \
             dist/updates/appcast.xml \
+            dist/notarized/Lantern.dmg \
             --clobber

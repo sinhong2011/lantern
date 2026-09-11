@@ -110,3 +110,32 @@ xcrun stapler validate "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 
 echo "Notarized app: $APP"
+
+# First-run download: UDZO image with an Applications drop target.
+# Sparkle still ships the zip; the DMG is notarized separately.
+STAGE="$ROOT/build/dmg-root"
+DMG="$EXPORT_DIR/Lantern.dmg"
+rm -rf "$STAGE" "$DMG"
+mkdir -p "$STAGE"
+ditto "$APP" "$STAGE/Lantern.app"
+ln -s /Applications "$STAGE/Applications"
+
+hdiutil create \
+  -volname "Lantern" \
+  -srcfolder "$STAGE" \
+  -ov \
+  -format UDZO \
+  -imagekey zlib-level=9 \
+  "$DMG"
+
+xcrun notarytool submit "$DMG" \
+  --key "$API_KEY_FILE" \
+  --key-id "$APPLE_API_KEY_ID" \
+  --issuer "$APPLE_API_ISSUER" \
+  --wait \
+  --timeout 30m
+
+xcrun stapler staple "$DMG"
+xcrun stapler validate "$DMG"
+
+echo "Notarized DMG: $DMG"

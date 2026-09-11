@@ -3,6 +3,16 @@
 **Portless LAN names for local apps.**  
 Menu bar app for macOS that advertises `http://name.local` on your Wi‑Fi — the missing piece when OrbStack’s `*.orb.local` only works on the host.
 
+<p>
+    <a href="https://github.com/sinhong2011/lantern/releases/latest/download/Lantern.dmg">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/download-macos-dark.svg">
+      <img src="docs/download-macos.svg" alt="Download for macOS" width="248" height="56">
+    </picture>
+  </a>
+</p>
+
+[![Latest](https://img.shields.io/github/v/release/sinhong2011/lantern?label=latest)](https://github.com/sinhong2011/lantern/releases/latest)
 [![CI](https://github.com/sinhong2011/lantern/actions/workflows/ci.yml/badge.svg)](https://github.com/sinhong2011/lantern/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -37,9 +47,8 @@ No changes required in the target project — Lantern rewrites `Host` to localho
 
 ## Requirements
 
-- macOS 14+ (developed on macOS 26/27)
-- Xcode 16+ (Swift 6)
-- [XcodeGen](https://github.com/yonaskolb/XcodeGen)
+- **Download:** macOS 14+
+- **From source:** Xcode 16+ (Swift 6) and [XcodeGen](https://github.com/yonaskolb/XcodeGen)
 
 ## Install (from source)
 
@@ -67,9 +76,7 @@ Lantern uses [Sparkle](https://sparkle-project.org) against GitHub Releases.
 - Settings → About: **Check for Updates…**
 - Feed: `https://github.com/sinhong2011/lantern/releases/latest/download/appcast.xml`
 
-Releases are cut by [release-please](https://github.com/googleapis/release-please) from [conventional commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `feat!:`). Merging the Release PR tags `vX.Y.Z`; CI then Developer ID–signs, notarizes, staples, and attaches `Lantern.zip` + `appcast.xml`.
-
-Until the first tagged Release exists, Check for Updates has nothing to fetch.
+Releases are cut by [release-please](https://github.com/googleapis/release-please) from [conventional commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `feat!:`). Merging the Release PR tags `vX.Y.Z`; CI then Developer ID–signs, notarizes, staples, and attaches `Lantern.dmg` (first run), `Lantern.zip` + `appcast.xml` (Sparkle).
 
 Notarized CI needs these GitHub secrets (Team API key — individual keys cannot call notarytool):
 
