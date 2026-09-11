@@ -93,7 +93,7 @@ struct AddServiceSheet: View {
         @Bindable var model = model
         return LanternSection {
             EditorRow(title: "Label", symbol: "tag") {
-                TextField("Probus / Vite", text: $model.draftNotes)
+                TextField("Vite / Docker", text: $model.draftNotes)
                     .textFieldStyle(.plain)
                     .focused($focused, equals: .notes)
                     .frame(minWidth: 0)
@@ -108,7 +108,7 @@ struct AddServiceSheet: View {
                 danger: showValidation && !nameValid
             ) {
                 HStack(spacing: 4) {
-                    TextField("probus", text: $model.draftName)
+                    TextField("myapp", text: $model.draftName)
                         .textFieldStyle(.plain)
                         .font(.system(.body, design: .monospaced))
                         .focused($focused, equals: .name)
@@ -292,14 +292,10 @@ struct AddServiceSheet: View {
 
     private var previewURL: String {
         let name = cleanedName
-        let port = parsedPort ?? 8080
-        if model.store.proxyEnabled && model.proxyRunning && model.store.proxyPort == 80 {
-            return "http://\(name).local"
-        }
         if model.store.proxyEnabled {
             return "http://\(name).local\(LanternTheme.portText(model.store.proxyPort))"
         }
-        return "http://\(name).local\(LanternTheme.portText(port))"
+        return "http://\(name).local\(LanternTheme.portText(parsedPort ?? 8080))"
     }
 
     private var rowDivider: some View {

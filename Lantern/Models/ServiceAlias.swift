@@ -24,14 +24,11 @@ struct ServiceAlias: Identifiable, Codable, Hashable, Sendable {
     var hostName: String { "\(name).local" }
 
     func publicURL(lanIP: String?, proxyPort: Int?, proxyEnabled: Bool) -> String {
-        let host = hostName
-        if proxyEnabled, let proxyPort {
-            if proxyPort == 80 {
-                return "http://\(host)"
-            }
-            return "http://\(host):\(proxyPort)"
+        let port = proxyEnabled ? (proxyPort ?? localPort) : localPort
+        if port == 80 {
+            return "http://\(hostName)"
         }
-        return "http://\(host):\(localPort)"
+        return "http://\(hostName):\(port)"
     }
 
     static func sanitizedName(_ raw: String) -> String {

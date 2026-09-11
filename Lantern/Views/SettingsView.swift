@@ -97,7 +97,7 @@ struct SettingsView: View {
                 settingsCard {
                     toggleRow(
                         title: "Hide the port in the URL",
-                        subtitle: "Share http://probus.local instead of http://probus.local:5173."
+                        subtitle: "Share http://\(exampleHost) — no port to type."
                     ) {
                         Toggle("", isOn: Binding(
                             get: { model.store.proxyEnabled },
@@ -327,9 +327,16 @@ struct SettingsView: View {
         Task { await model.reconcile() }
     }
 
+    private var exampleHost: String {
+        "\(model.store.aliases.first?.name ?? "myapp").local"
+    }
+
     private var exampleURL: String {
-        if !model.store.proxyEnabled { return "http://probus.local:5173" }
-        return urlMode == .portless ? "http://probus.local" : "http://probus.local:8787"
+        if !model.store.proxyEnabled {
+            let port = model.store.aliases.first?.localPort ?? 8080
+            return "http://\(exampleHost)\(LanternTheme.portText(port))"
+        }
+        return urlMode == .portless ? "http://\(exampleHost)" : "http://\(exampleHost):8787"
     }
 
     private var friendlyProxyStatus: String {

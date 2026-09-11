@@ -19,7 +19,9 @@ enum LanternTheme {
     static let radiusM: CGFloat = 10
     static let radiusL: CGFloat = 12
 
-    static func portText(_ port: Int) -> String { ":\(port)" }
+    static func portText(_ port: Int) -> String {
+        port == 80 ? "" : ":\(port)"
+    }
 }
 
 // MARK: - System vibrancy (matches menu bar / BetterDisplay)
