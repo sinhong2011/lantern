@@ -90,10 +90,6 @@ struct ServiceRowView: View {
                     }
 
                     Spacer(minLength: 6)
-
-                    Text(verbatim: LanternTheme.portText(alias.localPort))
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundStyle(.secondary)
                 }
                 .contentShape(Rectangle())
             }

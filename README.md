@@ -4,7 +4,7 @@
 Menu bar app for macOS that advertises `http://name.local` on your Wi‑Fi — the missing piece when OrbStack’s `*.orb.local` only works on the host.
 
 <p align="center">
-  <img src="docs/lantern-promo.jpg" alt="Lantern menu bar: share a local app as http://probus.local" width="960">
+  <img src="docs/lantern-promo.jpg" alt="Lantern menu bar: share a local app as http://myapp.local" width="960">
 </p>
 
 <p>
@@ -24,12 +24,12 @@ Menu bar app for macOS that advertises `http://name.local` on your Wi‑Fi — t
 
 | Without Lantern | With Lantern |
 |-----------------|--------------|
-| `http://192.168.x.x:5173` | `http://probus.local` |
+| `http://192.168.x.x:5173` | `http://myapp.local` |
 | OrbStack `*.orb.local` (this Mac only) | Real LAN Bonjour name |
 | Every phone must remember ports | Default HTTP port via local reverse proxy |
 
 ```text
-Phone  →  http://probus.local
+Phone  →  http://myapp.local
               ↓  mDNS (Bonjour)
          Mac LAN IP :80
               ↓  Lantern proxy (rewrites Host)
@@ -101,7 +101,7 @@ Local `make run` / `make dist` stay ad-hoc and unsigned.
 1. Click the antenna icon in the menu bar  
 2. Turn on the master **Broadcast** toggle  
 3. **Add Service** — pick a listening port (or type one)  
-4. On another device on the same Wi‑Fi, open the URL (e.g. `http://probus.local`)
+4. On another device on the same Wi‑Fi, open the URL (e.g. `http://myapp.local`)
 
 **Easy URLs** (Settings):
 
