@@ -33,6 +33,7 @@ private enum URLMode: Hashable {
 
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
+    @Environment(AppUpdater.self) private var updater
     @State private var selection: SettingsPane? = .easyURLs
     @State private var copiedEndpoint = false
     private let endpoint = "http://127.0.0.1:19247"
@@ -69,6 +70,21 @@ struct SettingsView: View {
                                 model.store.save()
                                 try? setLaunchAtLogin(enabled)
                             }
+                        ))
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .tint(LanternTheme.accent)
+                    }
+                }
+
+                settingsCard {
+                    toggleRow(
+                        title: "Check for Updates Automatically",
+                        subtitle: "Looks for a new GitHub Release about once a day."
+                    ) {
+                        Toggle("", isOn: Binding(
+                            get: { updater.automaticallyChecksForUpdates },
+                            set: { updater.automaticallyChecksForUpdates = $0 }
                         ))
                         .toggleStyle(.switch)
                         .labelsHidden()
@@ -178,13 +194,22 @@ struct SettingsView: View {
         case .about:
             SettingsDetail(title: "About", symbol: SettingsPane.about.symbol) {
                 settingsCard {
-                    infoRow("Version", "0.1.0")
+                    infoRow("Version", AppVersion.display)
                     Divider().opacity(0.35)
                     infoRow("LAN", model.network.statusLabel)
                     Divider().opacity(0.35)
                     infoRow("Broadcast", model.store.masterBroadcastEnabled ? "On" : "Off")
                     Divider().opacity(0.35)
                     infoRow("Services", "\(model.store.aliases.count)")
+                    Divider().opacity(0.35)
+                    Button {
+                        updater.checkForUpdates()
+                    } label: {
+                        Label("Check for Updates…", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .disabled(!updater.canCheckForUpdates)
                 }
             }
         }

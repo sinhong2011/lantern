@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		20DA4040F31E6B3B88EBBBE4 /* ServiceAlias.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFB9DFE27ACCC385D077D382 /* ServiceAlias.swift */; };
 		469BCC1C4F17930FEE3098E0 /* LanternApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF0A350973F595F0D8BCA77 /* LanternApp.swift */; };
+		4969C774CA138CEB93BA35C0 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 68D0387A8A72541BC2FC7176 /* Sparkle */; };
 		4F97576FDB49D8223ED591A3 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44807C8E42262ADBA448B0FF /* SettingsView.swift */; };
 		89E9DFBE4EA15C57C9824D97 /* AddServiceSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BAAB2905AA24EAC4F9A3A7 /* AddServiceSheet.swift */; };
 		8A0766684FE5D987776EFC23 /* GlassStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C51377DF0462D652A5C8B23 /* GlassStyles.swift */; };
@@ -16,6 +17,7 @@
 		A3DEACEB5F4334F588F54F12 /* BroadcastEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92689D2DA5A933041746F173 /* BroadcastEngine.swift */; };
 		AC289667335BF77DF53913A4 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B2A1061FAABDB36A9FDD024 /* AppModel.swift */; };
 		B07C245D8A423740DACFB505 /* ControlServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC9E19C52ACE9233FC4BFCB6 /* ControlServer.swift */; };
+		B5E26DC342ED718B21A10074 /* AppUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BA72E8CAD2A995C456B37FD /* AppUpdater.swift */; };
 		B7EF26F5869393CB5512E4F6 /* MenuPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3295CCD9D19CA761C6D827DC /* MenuPanelView.swift */; };
 		BCEEEAB1B0240E70F8E3B415 /* AliasStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EB45998ADD1185A0D77089D /* AliasStore.swift */; };
 		C10CB35B487E49DE60CF34EC /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D95D2A5E1DCBD6086B2B4D5 /* NetworkMonitor.swift */; };
@@ -32,6 +34,7 @@
 		1D95D2A5E1DCBD6086B2B4D5 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		1F248D477CFF059D120307FD /* LocalProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalProxy.swift; sourceTree = "<group>"; };
 		3295CCD9D19CA761C6D827DC /* MenuPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuPanelView.swift; sourceTree = "<group>"; };
+		3BA72E8CAD2A995C456B37FD /* AppUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdater.swift; sourceTree = "<group>"; };
 		44807C8E42262ADBA448B0FF /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		5B2A1061FAABDB36A9FDD024 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		78315F6E7846D450F8758699 /* Lantern.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Lantern.entitlements; sourceTree = "<group>"; };
@@ -46,6 +49,17 @@
 		DFB9DFE27ACCC385D077D382 /* ServiceAlias.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceAlias.swift; sourceTree = "<group>"; };
 		ECA768AAB840E9FC39A3F58A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		666E5D99094D7A2308DE4B42 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4969C774CA138CEB93BA35C0 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		37CFF0C205492DEA6A25466B /* Products */ = {
@@ -112,6 +126,7 @@
 			isa = PBXGroup;
 			children = (
 				0EB45998ADD1185A0D77089D /* AliasStore.swift */,
+				3BA72E8CAD2A995C456B37FD /* AppUpdater.swift */,
 				92689D2DA5A933041746F173 /* BroadcastEngine.swift */,
 				BC9E19C52ACE9233FC4BFCB6 /* ControlServer.swift */,
 				1F248D477CFF059D120307FD /* LocalProxy.swift */,
@@ -130,6 +145,7 @@
 			buildPhases = (
 				5819480AA67FBF9F9AD02837 /* Sources */,
 				BE45F1990102F0FA49B00506 /* Resources */,
+				666E5D99094D7A2308DE4B42 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -137,6 +153,7 @@
 			);
 			name = Lantern;
 			packageProductDependencies = (
+				68D0387A8A72541BC2FC7176 /* Sparkle */,
 			);
 			productName = Lantern;
 			productReference = CF0D7C16F90B36C75E0A17B4 /* Lantern.app */;
@@ -166,6 +183,9 @@
 			);
 			mainGroup = 79A51CEB4B09484E37E947FF;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D178DA5278F2011D6E6F0DF2 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
@@ -194,6 +214,7 @@
 				89E9DFBE4EA15C57C9824D97 /* AddServiceSheet.swift in Sources */,
 				BCEEEAB1B0240E70F8E3B415 /* AliasStore.swift in Sources */,
 				AC289667335BF77DF53913A4 /* AppModel.swift in Sources */,
+				B5E26DC342ED718B21A10074 /* AppUpdater.swift in Sources */,
 				A3DEACEB5F4334F588F54F12 /* BroadcastEngine.swift in Sources */,
 				B07C245D8A423740DACFB505 /* ControlServer.swift in Sources */,
 				8A0766684FE5D987776EFC23 /* GlassStyles.swift in Sources */,
@@ -283,7 +304,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Lantern/Lantern.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 0.1.0;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Lantern/Info.plist;
@@ -360,7 +381,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Lantern/Lantern.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 0.1.0;
+				ENABLE_LIBRARY_VALIDATION = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Lantern/Info.plist;
@@ -395,6 +417,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D178DA5278F2011D6E6F0DF2 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.6;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		68D0387A8A72541BC2FC7176 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D178DA5278F2011D6E6F0DF2 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1FD4793E620B03F69A351D37 /* Project object */;
 }

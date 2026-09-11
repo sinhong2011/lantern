@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct LanternApp: App {
     @State private var model = AppModel()
+    @State private var updater = AppUpdater()
 
     var body: some Scene {
         MenuBarExtra {
@@ -22,6 +23,7 @@ struct LanternApp: App {
         Window("Lantern Settings", id: "settings") {
             SettingsView()
                 .environment(model)
+                .environment(updater)
         }
         .windowResizability(.contentSize)
         .defaultSize(width: 660, height: 460)

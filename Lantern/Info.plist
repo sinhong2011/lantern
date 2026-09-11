@@ -33,5 +33,15 @@
 	<true/>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/sinhong2011/lantern/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>S5lqsg8xzCy3XxmEzV9TnfOaVHwIz53f+BB2rDJNIJk=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 </dict>
 </plist>

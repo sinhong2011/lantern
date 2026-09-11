@@ -28,6 +28,7 @@ make open       # Xcode
 - Prefer fixing behavior in Lantern (e.g. Host rewrite) over asking users to patch their apps.
 - Swift 6 strict concurrency — avoid silencing isolation issues without reason.
 - Don’t commit secrets, personal DerivedData, or local signing identities.
+- Use [conventional commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `docs:`, `feat!:`) so [release-please](https://github.com/googleapis/release-please) can version and changelog.
 - Match existing code style; keep diffs focused.
 
 ## Pull requests

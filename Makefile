@@ -2,6 +2,7 @@
 #   make run       build Debug and relaunch the menu bar app
 #   make relaunch  reopen the last Debug build (no compile)
 #   make open      generate + open Xcode
+#   make dist      zip a Release build (Sparkle signing happens in CI)
 
 .DEFAULT_GOAL := help
 
@@ -11,6 +12,7 @@ DERIVED := $(CURDIR)/build/DerivedData
 APP     := $(DERIVED)/Build/Products/$(CONFIG)/$(SCHEME).app
 PROJECT := Lantern.xcodeproj
 API     := http://127.0.0.1:19247
+DIST    := $(CURDIR)/dist
 
 XCODEBUILD_FLAGS := \
 	-project $(PROJECT) \
@@ -21,7 +23,7 @@ XCODEBUILD_FLAGS := \
 	CODE_SIGNING_REQUIRED=NO \
 	CODE_SIGNING_ALLOWED=YES
 
-.PHONY: help generate build run relaunch kill open status clean distclean
+.PHONY: help generate build run relaunch kill open status dist clean distclean
 
 help:
 	@echo "Lantern"
@@ -31,6 +33,7 @@ help:
 	@echo "  make kill       quit Lantern"
 	@echo "  make open       generate and open Xcode"
 	@echo "  make status     Control API /status"
+	@echo "  make dist       Release zip at dist/updates/Lantern.zip"
 	@echo "  make clean      delete DerivedData"
 	@echo "  make distclean  DerivedData + generated $(PROJECT)"
 	@echo "  CONFIG=Release make run"
@@ -64,8 +67,17 @@ open: generate
 status:
 	@curl -sS "$(API)/status" | python3 -m json.tool
 
+dist:
+	$(MAKE) build CONFIG=Release
+	rm -rf "$(DIST)/updates"
+	mkdir -p "$(DIST)/updates"
+	ditto -c -k --keepParent \
+		"$(DERIVED)/Build/Products/Release/$(SCHEME).app" \
+		"$(DIST)/updates/Lantern.zip"
+	@echo "Zipped: $(DIST)/updates/Lantern.zip"
+
 clean:
 	rm -rf "$(DERIVED)"
 
 distclean: clean
-	rm -rf "$(PROJECT)"
+	rm -rf "$(PROJECT)" "$(DIST)"

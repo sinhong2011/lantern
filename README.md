@@ -31,6 +31,7 @@ No changes required in the target project — Lantern rewrites `Host` to localho
 - Edit / remove services
 - Portless URLs via reverse proxy (port 80, or backup 8787)
 - Host-header rewrite for picky dev servers
+- Sparkle updates from GitHub Releases
 - Loopback Control API for scripts
 - Settings sidebar (“Easy URLs”)
 
@@ -57,6 +58,18 @@ make relaunch   # reopen last build (no compile)
 make open       # Xcode
 make status     # Control API
 ```
+
+## Updates
+
+Lantern uses [Sparkle](https://sparkle-project.org) against GitHub Releases.
+
+- Settings → General: automatic checks (about once a day)
+- Settings → About: **Check for Updates…**
+- Feed: `https://github.com/sinhong2011/lantern/releases/latest/download/appcast.xml`
+
+Releases are cut by [release-please](https://github.com/googleapis/release-please) from [conventional commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `feat!:`). Merging the Release PR tags `vX.Y.Z`; CI then attaches `Lantern.zip` and `appcast.xml`.
+
+Until the first tagged Release exists, Check for Updates has nothing to fetch.
 
 ## Usage
 
@@ -93,7 +106,8 @@ MenuBarExtra UI
   ├── BroadcastEngine     DNS-SD / dns-sd -P  → name.local → LAN IP
   ├── LocalProxy          :80/:8787  Host-based reverse proxy
   ├── PortDiscovery       lsof listening TCP ports
-  └── ControlServer       127.0.0.1:19247 JSON API
+  ├── ControlServer       127.0.0.1:19247 JSON API
+  └── AppUpdater          Sparkle → GitHub Releases appcast
 ```
 
 ## Project layout
