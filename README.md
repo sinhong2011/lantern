@@ -3,8 +3,12 @@
 **Portless LAN names for local apps.**  
 Menu bar app for macOS that advertises `http://name.local` on your Wi‑Fi — the missing piece when OrbStack’s `*.orb.local` only works on the host.
 
+<p align="center">
+  <img src="docs/lantern-promo.jpg" alt="Lantern menu bar: share a local app as http://probus.local" width="960">
+</p>
+
 <p>
-    <a href="https://github.com/sinhong2011/lantern/releases/latest/download/Lantern.dmg">
+  <a href="https://github.com/sinhong2011/lantern/releases/latest/download/Lantern.dmg">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/download-macos-dark.svg">
       <img src="docs/download-macos.svg" alt="Download for macOS" width="248" height="56">
