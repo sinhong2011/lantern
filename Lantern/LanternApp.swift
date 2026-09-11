@@ -41,19 +41,10 @@ private struct MenuBarLabel: View {
     let tint: AppModel.StatusTint
 
     var body: some View {
-        Image(systemName: symbol)
-            .symbolRenderingMode(.hierarchical)
+        Image("MenuBarIcon")
+            .renderingMode(.template)
             .foregroundStyle(color)
             .accessibilityLabel("Lantern")
-    }
-
-    private var symbol: String {
-        switch tint {
-        case .live, .pending, .idle:
-            return "antenna.radiowaves.left.and.right"
-        case .error:
-            return "exclamationmark.triangle.fill"
-        }
     }
 
     private var color: Color {

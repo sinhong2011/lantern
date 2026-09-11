@@ -76,8 +76,11 @@ struct MenuPanelView: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            Image(systemName: "light.min")
-                .font(.system(size: 15, weight: .semibold))
+            Image("MenuBarIcon")
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 18, height: 18)
                 .foregroundStyle(LanternTheme.accent)
                 .frame(width: 22)
 

@@ -194,6 +194,24 @@ struct SettingsView: View {
         case .about:
             SettingsDetail(title: "About", symbol: SettingsPane.about.symbol) {
                 settingsCard {
+                    VStack(spacing: 10) {
+                        Image("LanternLogo")
+                            .resizable()
+                            .interpolation(.high)
+                            .scaledToFit()
+                            .frame(width: 128, height: 128)
+                            .shadow(color: .black.opacity(0.22), radius: 12, y: 5)
+                            .accessibilityLabel("Lantern")
+                        Text("Lantern")
+                            .font(.system(size: 18, weight: .semibold))
+                        Text("Portless LAN names for local apps")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.bottom, 4)
+
+                    Divider().opacity(0.35)
                     infoRow("Version", AppVersion.display)
                     Divider().opacity(0.35)
                     infoRow("LAN", model.network.statusLabel)
