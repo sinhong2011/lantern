@@ -23,14 +23,46 @@ jobs:
           manifest-file: .release-please-manifest.json
 
   publish:
-    name: Sparkle archive
+    name: Sign, notarize, Sparkle
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created }}
     runs-on: macos-15
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Check notarization secrets
+        env:
+          APPLE_DEVELOPER_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+          APPLE_DEVELOPER_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: |
+          missing=()
+          for name in \
+            APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 \
+            APPLE_DEVELOPER_CERTIFICATE_PASSWORD \
+            APPLE_TEAM_ID \
+            APPLE_API_KEY_ID \
+            APPLE_API_ISSUER \
+            APPLE_API_KEY_P8 \
+            SPARKLE_ED_PRIVATE_KEY
+          do
+            if [[ -z "${!name}" ]]; then
+              missing+=("$name")
+            fi
+          done
+          if ((${#missing[@]})); then
+            echo "Notarized releases need these GitHub secrets:" >&2
+            printf '  %s\n' "${missing[@]}" >&2
+            echo "See README.md → Updates." >&2
+            exit 1
+          fi
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
@@ -38,18 +70,20 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Generate & build Release
+      - uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+
+      - name: Archive, notarize, staple
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
         run: |
-          xcodegen generate
-          xcodebuild \
-            -project Lantern.xcodeproj \
-            -scheme Lantern \
-            -configuration Release \
-            -derivedDataPath build/DerivedData \
-            build \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=YES
+          chmod +x scripts/ci-notarize.sh
+          scripts/ci-notarize.sh
 
       - name: Sign Sparkle update
         env:
@@ -59,7 +93,7 @@ jobs:
         run: |
           chmod +x scripts/publish-sparkle.sh
           scripts/publish-sparkle.sh \
-            build/DerivedData/Build/Products/Release/Lantern.app \
+            dist/notarized/Lantern.app \
             "$TAG_NAME"
 
       - name: Attach zip and appcast

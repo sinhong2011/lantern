@@ -67,9 +67,23 @@ Lantern uses [Sparkle](https://sparkle-project.org) against GitHub Releases.
 - Settings → About: **Check for Updates…**
 - Feed: `https://github.com/sinhong2011/lantern/releases/latest/download/appcast.xml`
 
-Releases are cut by [release-please](https://github.com/googleapis/release-please) from [conventional commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `feat!:`). Merging the Release PR tags `vX.Y.Z`; CI then attaches `Lantern.zip` and `appcast.xml`.
+Releases are cut by [release-please](https://github.com/googleapis/release-please) from [conventional commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `feat!:`). Merging the Release PR tags `vX.Y.Z`; CI then Developer ID–signs, notarizes, staples, and attaches `Lantern.zip` + `appcast.xml`.
 
 Until the first tagged Release exists, Check for Updates has nothing to fetch.
+
+Notarized CI needs these GitHub secrets (Team API key — individual keys cannot call notarytool):
+
+| Secret | What |
+|--------|------|
+| `APPLE_DEVELOPER_CERTIFICATE_P12_BASE64` | `base64 -i DeveloperID.p12` |
+| `APPLE_DEVELOPER_CERTIFICATE_PASSWORD` | Password for that `.p12` |
+| `APPLE_TEAM_ID` | 10-character Team ID |
+| `APPLE_API_KEY_ID` | App Store Connect Team Key ID |
+| `APPLE_API_ISSUER` | Issuer UUID |
+| `APPLE_API_KEY_P8` | Contents of `AuthKey_*.p8` (or base64 of the file) |
+| `SPARKLE_ED_PRIVATE_KEY` | Already set |
+
+Local `make run` / `make dist` stay ad-hoc and unsigned.
 
 ## Usage
 

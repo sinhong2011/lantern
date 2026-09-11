@@ -42,6 +42,7 @@
 		7C51377DF0462D652A5C8B23 /* GlassStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassStyles.swift; sourceTree = "<group>"; };
 		91BAAB2905AA24EAC4F9A3A7 /* AddServiceSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddServiceSheet.swift; sourceTree = "<group>"; };
 		92689D2DA5A933041746F173 /* BroadcastEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastEngine.swift; sourceTree = "<group>"; };
+		9E3507427FBE9879695036C1 /* Lantern.debug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Lantern.debug.entitlements; sourceTree = "<group>"; };
 		B50C4F47973053901C775A91 /* LanternTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanternTheme.swift; sourceTree = "<group>"; };
 		BC9E19C52ACE9233FC4BFCB6 /* ControlServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlServer.swift; sourceTree = "<group>"; };
 		CF0D7C16F90B36C75E0A17B4 /* Lantern.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lantern.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -112,6 +113,7 @@
 				5B2A1061FAABDB36A9FDD024 /* AppModel.swift */,
 				ECA768AAB840E9FC39A3F58A /* Assets.xcassets */,
 				186A26F14F364EE30E03392D /* Info.plist */,
+				9E3507427FBE9879695036C1 /* Lantern.debug.entitlements */,
 				78315F6E7846D450F8758699 /* Lantern.entitlements */,
 				0DF0A350973F595F0D8BCA77 /* LanternApp.swift */,
 				6A35BD7D782F55CD9CDCF047 /* Models */,
@@ -379,7 +381,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Lantern/Lantern.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Lantern/Lantern.debug.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 0.1.0;
 				ENABLE_LIBRARY_VALIDATION = NO;

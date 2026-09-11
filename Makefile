@@ -2,7 +2,7 @@
 #   make run       build Debug and relaunch the menu bar app
 #   make relaunch  reopen the last Debug build (no compile)
 #   make open      generate + open Xcode
-#   make dist      zip a Release build (Sparkle signing happens in CI)
+#   make dist      zip an ad-hoc Release build (CI notarizes for GitHub Releases)
 
 .DEFAULT_GOAL := help
 

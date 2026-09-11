@@ -39,13 +39,11 @@ targets:
         MARKETING_VERSION: "0.1.0" # x-release-please-version
         CURRENT_PROJECT_VERSION: "0.1.0" # x-release-please-version
         SWIFT_STRICT_CONCURRENCY: complete
+        CODE_SIGN_ENTITLEMENTS: Lantern/Lantern.entitlements
       configs:
         Debug:
+          CODE_SIGN_ENTITLEMENTS: Lantern/Lantern.debug.entitlements
           ENABLE_LIBRARY_VALIDATION: NO
-    entitlements:
-      path: Lantern/Lantern.entitlements
-      properties:
-        com.apple.security.cs.disable-library-validation: true
     info:
       path: Lantern/Info.plist
       properties:
