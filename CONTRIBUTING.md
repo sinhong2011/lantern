@@ -9,7 +9,7 @@ Thanks for helping improve Lantern.
 3. Clone and generate the project:
 
 ```bash
-git clone https://github.com/<you>/lantern.git
+git clone https://github.com/sinhong2011/lantern.git
 cd lantern
 xcodegen generate
 open Lantern.xcodeproj

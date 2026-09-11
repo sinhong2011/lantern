@@ -3,10 +3,8 @@
 **Portless LAN names for local apps.**  
 Menu bar app for macOS that advertises `http://name.local` on your Wi‑Fi — the missing piece when OrbStack’s `*.orb.local` only works on the host.
 
-[![CI](https://github.com/niskan516/lantern/actions/workflows/ci.yml/badge.svg)](https://github.com/niskan516/lantern/actions/workflows/ci.yml)
+[![CI](https://github.com/sinhong2011/lantern/actions/workflows/ci.yml/badge.svg)](https://github.com/sinhong2011/lantern/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
-> Replace the badge repo path with yours after pushing to GitHub.
 
 ## Why
 
@@ -45,7 +43,7 @@ No changes required in the target project — Lantern rewrites `Host` to localho
 ## Install (from source)
 
 ```bash
-git clone https://github.com/<you>/lantern.git
+git clone https://github.com/sinhong2011/lantern.git
 cd lantern
 brew install xcodegen
 make run
