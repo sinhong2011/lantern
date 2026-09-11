@@ -108,3 +108,5 @@ jobs:
             "dist/notarized/Lantern-${TAG_NAME}.dmg" \
             dist/notarized/Lantern.dmg \
             --clobber
+          shasum -a 256 "dist/notarized/Lantern-${TAG_NAME}.dmg" > dist/notarized/SHA256SUMS
+          gh release upload "$TAG_NAME" dist/notarized/SHA256SUMS --clobber
