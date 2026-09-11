@@ -15,6 +15,10 @@ struct ServiceRowView: View {
         model.expandedServiceID == alias.id
     }
 
+    private var recentHits: [AccessEvent] {
+        model.logs.recent(for: alias, limit: 3)
+    }
+
     private var publicURL: String {
         alias.publicURL(
             lanIP: model.network.lanIPv4,
@@ -82,7 +86,7 @@ struct ServiceRowView: View {
                                     .frame(width: 6, height: 6)
                             }
                         }
-                        Text(shortURL)
+                        subtitle
                             .font(.system(size: 10, design: .monospaced))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -124,8 +128,61 @@ struct ServiceRowView: View {
         .padding(.vertical, 10)
     }
 
+    @ViewBuilder
+    private var subtitle: some View {
+        if model.logs.lastHit(for: alias) != nil {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Text(isJustNow(at: context.date) ? "just now" : shortURL)
+            }
+        } else {
+            Text(shortURL)
+        }
+    }
+
+    private func isJustNow(at date: Date) -> Bool {
+        guard let last = model.logs.lastHit(for: alias) else { return false }
+        return date.timeIntervalSince(last) < 10
+    }
+
+    private var recentHitsBlock: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if recentHits.isEmpty {
+                Text("No requests yet")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(recentHits) { event in
+                    HStack(spacing: 8) {
+                        Text(event.timeText)
+                            .foregroundStyle(.secondary)
+                        Text(event.method)
+                            .fontWeight(.semibold)
+                        Text(event.outcome.isFailure ? event.outcome.label : event.path)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        Spacer(minLength: 4)
+                        Text(event.displayClient)
+                            .foregroundStyle(.secondary)
+                    }
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(event.outcome.isFailure ? LanternTheme.danger : .primary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 3)
+                }
+            }
+        }
+        .padding(.top, 4)
+        .padding(.bottom, 6)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(recentHits.isEmpty ? "No requests yet" : "\(recentHits.count) recent requests")
+    }
+
     private var expandedBody: some View {
         VStack(spacing: 0) {
+            recentHitsBlock
+
             divider
 
             LanternMenuRow(

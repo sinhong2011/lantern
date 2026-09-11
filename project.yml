@@ -62,3 +62,29 @@ targets:
         SUEnableAutomaticChecks: true
         SUScheduledCheckInterval: 86400
         SUAutomaticallyUpdate: false
+  LanternTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: Lantern
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.lantern.LanternTests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_STRICT_CONCURRENCY: complete
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        CODE_SIGNING_ALLOWED: NO
+schemes:
+  Lantern:
+    build:
+      targets:
+        Lantern: all
+        LanternTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - LanternTests

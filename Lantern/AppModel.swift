@@ -9,6 +9,7 @@ final class AppModel {
     let network = NetworkMonitor()
     let broadcast = BroadcastEngine()
     let proxy = LocalProxy()
+    let logs = AccessLogStore()
     let control = ControlServer()
 
     var isBusy = false
@@ -25,6 +26,7 @@ final class AppModel {
     var expandedServiceID: UUID?
     private var toastToken = UUID()
     private var didStart = false
+    private var lastBoundPort: Int?
 
     var statusTint: StatusTint {
         if lastError != nil || proxyBindFailed { return .error }
@@ -48,6 +50,10 @@ final class AppModel {
         network.start()
         control.attach(app: self)
         control.start()
+        let logs = self.logs
+        proxy.onAccess = { event in
+            logs.record(event)
+        }
         Task { await reconcile() }
     }
 
@@ -63,6 +69,9 @@ final class AppModel {
     func reconcile() async {
         isBusy = true
         defer { isBusy = false }
+
+        let wasRunning = proxyRunning
+        let wasFailed = proxyBindFailed
 
         // Keep control API / Raycast-optional consumers in sync via shared store file.
         store.save()
@@ -104,10 +113,26 @@ final class AppModel {
                 proxyBindFailed = false
             }
         }
+
+        recordProxyActivity(wasRunning: wasRunning, wasFailed: wasFailed)
+    }
+
+    private func recordProxyActivity(wasRunning: Bool, wasFailed: Bool) {
+        if proxyRunning, !wasRunning || lastBoundPort != store.proxyPort {
+            logs.recordActivity(.proxyBound, "Proxy listening on :\(store.proxyPort)")
+            lastBoundPort = store.proxyPort
+        } else if !proxyRunning, wasRunning {
+            logs.recordActivity(.proxyStopped, "Proxy stopped")
+            lastBoundPort = nil
+        }
+        if proxyBindFailed, !wasFailed {
+            logs.recordActivity(.proxyBindFailed, lastError ?? "Proxy bind failed")
+        }
     }
 
     func setMasterBroadcast(_ enabled: Bool) {
         store.setMasterBroadcast(enabled)
+        logs.recordActivity(enabled ? .broadcastOn : .broadcastOff, enabled ? "Broadcast on" : "Broadcast off")
         Task { await reconcile() }
     }
 
@@ -125,7 +150,7 @@ final class AppModel {
             localPort: 8080,
             notes: "OrbStack / docker -p"
         )
-        store.upsert(sample)
+        upsertTracked(sample, existed: false)
         expandedServiceID = sample.id
         showToast("Added web.local → localhost:8080")
         Task { await reconcile() }
@@ -157,7 +182,13 @@ final class AppModel {
     }
 
     func toggleAlias(_ alias: ServiceAlias) {
-        store.setEnabled(id: alias.id, enabled: !alias.enabled)
+        let enabled = !alias.enabled
+        store.setEnabled(id: alias.id, enabled: enabled)
+        logs.recordActivity(
+            .serviceToggled,
+            "\(alias.hostName) \(enabled ? "on" : "off")",
+            host: alias.hostName
+        )
         Task { await reconcile() }
     }
 
@@ -165,7 +196,7 @@ final class AppModel {
         if expandedServiceID == alias.id {
             expandedServiceID = nil
         }
-        store.remove(id: alias.id)
+        removeTracked(alias)
         Task { await reconcile() }
     }
 
@@ -212,7 +243,7 @@ final class AppModel {
             enabled: editingAlias?.enabled ?? true,
             notes: draftNotes.trimmingCharacters(in: .whitespacesAndNewlines)
         )
-        store.upsert(alias)
+        upsertTracked(alias, existed: wasEditing)
         showingAddSheet = false
         expandedServiceID = alias.id
         showToast(wasEditing ? "Updated \(alias.hostName)" : "Added \(alias.hostName)")
@@ -258,6 +289,18 @@ final class AppModel {
             ]
         }
 
+        if method == "GET" && path == "/logs" {
+            return [
+                "ok": true,
+                "events": logs.entries.prefix(100).map(logDictionary),
+            ]
+        }
+
+        if method == "DELETE" && path == "/logs" {
+            logs.clear()
+            return ["ok": true]
+        }
+
         if method == "POST" && path == "/broadcast" {
             if let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
                let enabled = json["enabled"] as? Bool {
@@ -279,7 +322,7 @@ final class AppModel {
                 enabled: (json["enabled"] as? Bool) ?? true,
                 notes: (json["notes"] as? String) ?? ""
             )
-            store.upsert(alias)
+            upsertTracked(alias, existed: false)
             Task { await reconcile() }
             return ["ok": true, "alias": aliasDictionary(alias)]
         }
@@ -290,7 +333,9 @@ final class AppModel {
                 return ["ok": false, "error": "bad id"]
             }
             if method == "DELETE" {
-                store.remove(id: id)
+                if let alias = store.aliases.first(where: { $0.id == id }) {
+                    removeTracked(alias)
+                }
                 Task { await reconcile() }
                 return ["ok": true]
             }
@@ -301,7 +346,7 @@ final class AppModel {
                 if let port = json["localPort"] as? Int { alias.localPort = port }
                 if let enabled = json["enabled"] as? Bool { alias.enabled = enabled }
                 if let notes = json["notes"] as? String { alias.notes = notes }
-                store.upsert(alias)
+                upsertTracked(alias, existed: true)
                 Task { await reconcile() }
                 return ["ok": true, "alias": aliasDictionary(alias)]
             }
@@ -341,6 +386,48 @@ final class AppModel {
             "error": lastError as Any,
             "aliases": store.aliases.map(aliasDictionary),
         ]
+    }
+
+    private func upsertTracked(_ alias: ServiceAlias, existed: Bool) {
+        store.upsert(alias)
+        logs.recordActivity(
+            existed ? .serviceUpdated : .serviceAdded,
+            existed
+                ? "Updated \(alias.hostName) → localhost:\(alias.localPort)"
+                : "Added \(alias.hostName) → localhost:\(alias.localPort)",
+            host: alias.hostName
+        )
+    }
+
+    private func removeTracked(_ alias: ServiceAlias) {
+        store.remove(id: alias.id)
+        logs.recordActivity(.serviceRemoved, "Removed \(alias.hostName)", host: alias.hostName)
+    }
+
+    private func logDictionary(_ entry: LogEntry) -> [String: Any] {
+        switch entry {
+        case .access(let event):
+            [
+                "kind": "access",
+                "id": event.id.uuidString,
+                "at": event.at.formatted(.iso8601),
+                "method": event.method,
+                "path": event.path,
+                "host": event.host,
+                "client": event.client as Any,
+                "localPort": event.localPort as Any,
+                "outcome": event.outcome.rawValue,
+            ]
+        case .activity(let event):
+            [
+                "kind": "activity",
+                "id": event.id.uuidString,
+                "at": event.at.formatted(.iso8601),
+                "activity": event.kind.rawValue,
+                "message": event.message,
+                "host": event.host as Any,
+            ]
+        }
     }
 
     private func aliasDictionary(_ alias: ServiceAlias) -> [String: Any] {

@@ -48,6 +48,7 @@ No changes required in the target project — Lantern rewrites `Host` to localho
 - Sparkle updates from GitHub Releases
 - Loopback Control API for scripts
 - Settings sidebar (“Easy URLs”)
+- Access + activity log (menu row, Settings → Logs, Console.app)
 
 ## Requirements
 
@@ -121,7 +122,11 @@ curl -s -X POST http://127.0.0.1:19247/broadcast \
 curl -s -X POST http://127.0.0.1:19247/aliases \
   -H 'Content-Type: application/json' \
   -d '{"name":"web","localPort":8080}'
+curl -s http://127.0.0.1:19247/logs | jq
+curl -s -X DELETE http://127.0.0.1:19247/logs
 ```
+
+Console.app: filter `subsystem:app.lantern` (category `proxy`). Session only — quit clears the in-app list.
 
 ## Architecture
 
@@ -131,6 +136,7 @@ MenuBarExtra UI
   ├── BroadcastEngine     DNS-SD / dns-sd -P  → name.local → LAN IP
   ├── LocalProxy          :80/:8787  Host-based reverse proxy
   ├── PortDiscovery       lsof listening TCP ports
+  ├── AccessLogStore      session ring + os.Logger (Console.app)
   ├── ControlServer       127.0.0.1:19247 JSON API
   └── AppUpdater          Sparkle → GitHub Releases appcast
 ```

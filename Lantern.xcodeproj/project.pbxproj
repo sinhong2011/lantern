@@ -7,27 +7,47 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1EDA04D0F389A676439F7980 /* ServiceAliasTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A0B62D65FF82B17E9A2A217 /* ServiceAliasTests.swift */; };
 		20DA4040F31E6B3B88EBBBE4 /* ServiceAlias.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFB9DFE27ACCC385D077D382 /* ServiceAlias.swift */; };
 		469BCC1C4F17930FEE3098E0 /* LanternApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF0A350973F595F0D8BCA77 /* LanternApp.swift */; };
 		4969C774CA138CEB93BA35C0 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 68D0387A8A72541BC2FC7176 /* Sparkle */; };
 		4F97576FDB49D8223ED591A3 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44807C8E42262ADBA448B0FF /* SettingsView.swift */; };
+		5960B9283622410EA75C57DB /* HTTPAccessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D090C4AC8F7B9C2EB091C69 /* HTTPAccessTests.swift */; };
+		6419267435B0BEC5634C096B /* AccessEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01FF7CAB4F05D5F19B5086CA /* AccessEventTests.swift */; };
+		76643587FFD72A7603B9BC22 /* AccessLogStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9364961AF41E9B266C0B31 /* AccessLogStoreTests.swift */; };
 		89E9DFBE4EA15C57C9824D97 /* AddServiceSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BAAB2905AA24EAC4F9A3A7 /* AddServiceSheet.swift */; };
 		8A0766684FE5D987776EFC23 /* GlassStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C51377DF0462D652A5C8B23 /* GlassStyles.swift */; };
+		93CF46A80A00003D0053793E /* LogsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C95ABA65AE6CEB24049821A4 /* LogsSettingsView.swift */; };
 		95FDB1EEB57697C71C1C230C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ECA768AAB840E9FC39A3F58A /* Assets.xcassets */; };
 		A3DEACEB5F4334F588F54F12 /* BroadcastEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92689D2DA5A933041746F173 /* BroadcastEngine.swift */; };
 		AC289667335BF77DF53913A4 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B2A1061FAABDB36A9FDD024 /* AppModel.swift */; };
 		B07C245D8A423740DACFB505 /* ControlServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC9E19C52ACE9233FC4BFCB6 /* ControlServer.swift */; };
+		B595B489C4C21665E75F7239 /* AccessEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AE71D5DB99BA0C1882F32AC /* AccessEvent.swift */; };
 		B5E26DC342ED718B21A10074 /* AppUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BA72E8CAD2A995C456B37FD /* AppUpdater.swift */; };
 		B7EF26F5869393CB5512E4F6 /* MenuPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3295CCD9D19CA761C6D827DC /* MenuPanelView.swift */; };
+		BA6AB5DACDCE10D88C476A66 /* ActivityEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F2E5BC5E80FCB9A205689B /* ActivityEvent.swift */; };
 		BCEEEAB1B0240E70F8E3B415 /* AliasStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EB45998ADD1185A0D77089D /* AliasStore.swift */; };
 		C10CB35B487E49DE60CF34EC /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D95D2A5E1DCBD6086B2B4D5 /* NetworkMonitor.swift */; };
+		DBA146E9B604944FDB88302E /* AccessLogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F05CB7547A886EAB89EC9E85 /* AccessLogStore.swift */; };
 		DDA81CC552A70311A18A98A3 /* ServiceRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A43EA05C1BDDF81B74499AB /* ServiceRowView.swift */; };
 		E0DD1DDA77B56DD69B083C41 /* PortDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5CE5E16B46E04CA20AE7BBA /* PortDiscovery.swift */; };
 		E3163C0C8CF1FB8506D7A4A9 /* LanternTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50C4F47973053901C775A91 /* LanternTheme.swift */; };
 		EC5BAA40AABCD51820EF3035 /* LocalProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F248D477CFF059D120307FD /* LocalProxy.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		7CD1E96611AB5A4D5A27DD41 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1FD4793E620B03F69A351D37 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7AC3392C4053E792C320FF69;
+			remoteInfo = Lantern;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		01FF7CAB4F05D5F19B5086CA /* AccessEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessEventTests.swift; sourceTree = "<group>"; };
+		020C1FF532B7BC70ABBD84E0 /* LanternTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LanternTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0DF0A350973F595F0D8BCA77 /* LanternApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanternApp.swift; sourceTree = "<group>"; };
 		0EB45998ADD1185A0D77089D /* AliasStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AliasStore.swift; sourceTree = "<group>"; };
 		186A26F14F364EE30E03392D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -36,19 +56,26 @@
 		3295CCD9D19CA761C6D827DC /* MenuPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuPanelView.swift; sourceTree = "<group>"; };
 		3BA72E8CAD2A995C456B37FD /* AppUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdater.swift; sourceTree = "<group>"; };
 		44807C8E42262ADBA448B0FF /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		4AE71D5DB99BA0C1882F32AC /* AccessEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessEvent.swift; sourceTree = "<group>"; };
 		5B2A1061FAABDB36A9FDD024 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		78315F6E7846D450F8758699 /* Lantern.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Lantern.entitlements; sourceTree = "<group>"; };
 		7A43EA05C1BDDF81B74499AB /* ServiceRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceRowView.swift; sourceTree = "<group>"; };
+		7B9364961AF41E9B266C0B31 /* AccessLogStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessLogStoreTests.swift; sourceTree = "<group>"; };
 		7C51377DF0462D652A5C8B23 /* GlassStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassStyles.swift; sourceTree = "<group>"; };
+		7D090C4AC8F7B9C2EB091C69 /* HTTPAccessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPAccessTests.swift; sourceTree = "<group>"; };
 		91BAAB2905AA24EAC4F9A3A7 /* AddServiceSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddServiceSheet.swift; sourceTree = "<group>"; };
 		92689D2DA5A933041746F173 /* BroadcastEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastEngine.swift; sourceTree = "<group>"; };
+		9A0B62D65FF82B17E9A2A217 /* ServiceAliasTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceAliasTests.swift; sourceTree = "<group>"; };
 		9E3507427FBE9879695036C1 /* Lantern.debug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Lantern.debug.entitlements; sourceTree = "<group>"; };
 		B50C4F47973053901C775A91 /* LanternTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanternTheme.swift; sourceTree = "<group>"; };
 		BC9E19C52ACE9233FC4BFCB6 /* ControlServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlServer.swift; sourceTree = "<group>"; };
+		C95ABA65AE6CEB24049821A4 /* LogsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogsSettingsView.swift; sourceTree = "<group>"; };
 		CF0D7C16F90B36C75E0A17B4 /* Lantern.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lantern.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D5CE5E16B46E04CA20AE7BBA /* PortDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortDiscovery.swift; sourceTree = "<group>"; };
 		DFB9DFE27ACCC385D077D382 /* ServiceAlias.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceAlias.swift; sourceTree = "<group>"; };
+		E4F2E5BC5E80FCB9A205689B /* ActivityEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityEvent.swift; sourceTree = "<group>"; };
 		ECA768AAB840E9FC39A3F58A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F05CB7547A886EAB89EC9E85 /* AccessLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessLogStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +94,7 @@
 			isa = PBXGroup;
 			children = (
 				CF0D7C16F90B36C75E0A17B4 /* Lantern.app */,
+				020C1FF532B7BC70ABBD84E0 /* LanternTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -74,6 +102,8 @@
 		6A35BD7D782F55CD9CDCF047 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				4AE71D5DB99BA0C1882F32AC /* AccessEvent.swift */,
+				E4F2E5BC5E80FCB9A205689B /* ActivityEvent.swift */,
 				DFB9DFE27ACCC385D077D382 /* ServiceAlias.swift */,
 			);
 			path = Models;
@@ -92,6 +122,7 @@
 			isa = PBXGroup;
 			children = (
 				C6A351E88BF16F0479D834A6 /* Lantern */,
+				A5D2CA32E454B399D0746BBE /* Tests */,
 				37CFF0C205492DEA6A25466B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -100,11 +131,23 @@
 			isa = PBXGroup;
 			children = (
 				91BAAB2905AA24EAC4F9A3A7 /* AddServiceSheet.swift */,
+				C95ABA65AE6CEB24049821A4 /* LogsSettingsView.swift */,
 				3295CCD9D19CA761C6D827DC /* MenuPanelView.swift */,
 				7A43EA05C1BDDF81B74499AB /* ServiceRowView.swift */,
 				44807C8E42262ADBA448B0FF /* SettingsView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		A5D2CA32E454B399D0746BBE /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				01FF7CAB4F05D5F19B5086CA /* AccessEventTests.swift */,
+				7B9364961AF41E9B266C0B31 /* AccessLogStoreTests.swift */,
+				7D090C4AC8F7B9C2EB091C69 /* HTTPAccessTests.swift */,
+				9A0B62D65FF82B17E9A2A217 /* ServiceAliasTests.swift */,
+			);
+			path = Tests;
 			sourceTree = "<group>";
 		};
 		C6A351E88BF16F0479D834A6 /* Lantern */ = {
@@ -127,6 +170,7 @@
 		F4FFAF43FD775026F4024981 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				F05CB7547A886EAB89EC9E85 /* AccessLogStore.swift */,
 				0EB45998ADD1185A0D77089D /* AliasStore.swift */,
 				3BA72E8CAD2A995C456B37FD /* AppUpdater.swift */,
 				92689D2DA5A933041746F173 /* BroadcastEngine.swift */,
@@ -141,6 +185,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		446B31C1F9535481905B2F71 /* LanternTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BD6FAD62ACD126403CC75C91 /* Build configuration list for PBXNativeTarget "LanternTests" */;
+			buildPhases = (
+				A1D0D178FFB64CF6CC531708 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E42AA0CD66A7A3CC8A0F414B /* PBXTargetDependency */,
+			);
+			name = LanternTests;
+			packageProductDependencies = (
+			);
+			productName = LanternTests;
+			productReference = 020C1FF532B7BC70ABBD84E0 /* LanternTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		7AC3392C4053E792C320FF69 /* Lantern */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8039D20FDCBB37B5FA7367FE /* Build configuration list for PBXNativeTarget "Lantern" */;
@@ -170,6 +232,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
+					446B31C1F9535481905B2F71 = {
+						ProvisioningStyle = Automatic;
+					};
 					7AC3392C4053E792C320FF69 = {
 						ProvisioningStyle = Automatic;
 					};
@@ -193,6 +258,7 @@
 			projectRoot = "";
 			targets = (
 				7AC3392C4053E792C320FF69 /* Lantern */,
+				446B31C1F9535481905B2F71 /* LanternTests */,
 			);
 		};
 /* End PBXProject section */
@@ -213,6 +279,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B595B489C4C21665E75F7239 /* AccessEvent.swift in Sources */,
+				DBA146E9B604944FDB88302E /* AccessLogStore.swift in Sources */,
+				BA6AB5DACDCE10D88C476A66 /* ActivityEvent.swift in Sources */,
 				89E9DFBE4EA15C57C9824D97 /* AddServiceSheet.swift in Sources */,
 				BCEEEAB1B0240E70F8E3B415 /* AliasStore.swift in Sources */,
 				AC289667335BF77DF53913A4 /* AppModel.swift in Sources */,
@@ -223,6 +292,7 @@
 				469BCC1C4F17930FEE3098E0 /* LanternApp.swift in Sources */,
 				E3163C0C8CF1FB8506D7A4A9 /* LanternTheme.swift in Sources */,
 				EC5BAA40AABCD51820EF3035 /* LocalProxy.swift in Sources */,
+				93CF46A80A00003D0053793E /* LogsSettingsView.swift in Sources */,
 				B7EF26F5869393CB5512E4F6 /* MenuPanelView.swift in Sources */,
 				C10CB35B487E49DE60CF34EC /* NetworkMonitor.swift in Sources */,
 				E0DD1DDA77B56DD69B083C41 /* PortDiscovery.swift in Sources */,
@@ -232,7 +302,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1D0D178FFB64CF6CC531708 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6419267435B0BEC5634C096B /* AccessEventTests.swift in Sources */,
+				76643587FFD72A7603B9BC22 /* AccessLogStoreTests.swift in Sources */,
+				5960B9283622410EA75C57DB /* HTTPAccessTests.swift in Sources */,
+				1EDA04D0F389A676439F7980 /* ServiceAliasTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E42AA0CD66A7A3CC8A0F414B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7AC3392C4053E792C320FF69 /* Lantern */;
+			targetProxy = 7CD1E96611AB5A4D5A27DD41 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		2983E8D91A419847E9E34921 /* Debug */ = {
@@ -306,18 +395,38 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Lantern/Lantern.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 0.1.0;
+				CURRENT_PROJECT_VERSION = 0.2.2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Lantern/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = app.lantern.Lantern;
 				PRODUCT_NAME = Lantern;
 				SDKROOT = macosx;
 				SWIFT_STRICT_CONCURRENCY = complete;
 			};
 			name = Release;
+		};
+		6516D36CFDF6DD41C1E32A2E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.lantern.LanternTests;
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Lantern.app/Contents/MacOS/Lantern";
+			};
+			name = Debug;
 		};
 		BB39F562FFDD93956CF0AF3A /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -383,19 +492,39 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Lantern/Lantern.debug.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 0.1.0;
+				CURRENT_PROJECT_VERSION = 0.2.2;
 				ENABLE_LIBRARY_VALIDATION = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Lantern/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = app.lantern.Lantern;
 				PRODUCT_NAME = Lantern;
 				SDKROOT = macosx;
 				SWIFT_STRICT_CONCURRENCY = complete;
 			};
 			name = Debug;
+		};
+		FA1046E71E7719D8C82CEF11 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.lantern.LanternTests;
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Lantern.app/Contents/MacOS/Lantern";
+			};
+			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
@@ -414,6 +543,15 @@
 			buildConfigurations = (
 				D64EF355181C3449A0F3FAD4 /* Debug */,
 				4D66DB5086E8C8CDD47E1077 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BD6FAD62ACD126403CC75C91 /* Build configuration list for PBXNativeTarget "LanternTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6516D36CFDF6DD41C1E32A2E /* Debug */,
+				FA1046E71E7719D8C82CEF11 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

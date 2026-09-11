@@ -23,12 +23,14 @@ XCODEBUILD_FLAGS := \
 	CODE_SIGNING_REQUIRED=NO \
 	CODE_SIGNING_ALLOWED=YES
 
-.PHONY: help generate build run relaunch kill open status dist clean distclean
+.PHONY: help generate build test e2e run relaunch kill open status dist clean distclean
 
 help:
 	@echo "Lantern"
 	@echo "  make run        generate, build $(CONFIG), relaunch"
 	@echo "  make build      generate + xcodebuild"
+	@echo "  make test       generate + Swift Testing (LanternTests)"
+	@echo "  make e2e        relaunch Debug app and exercise /logs"
 	@echo "  make relaunch   quit running app and open $(CONFIG) build"
 	@echo "  make kill       quit Lantern"
 	@echo "  make open       generate and open Xcode"
@@ -48,6 +50,15 @@ generate:
 build: generate
 	xcodebuild $(XCODEBUILD_FLAGS) build
 	@echo "Built: $(APP)"
+
+test: generate
+	xcodebuild $(XCODEBUILD_FLAGS) \
+		-destination 'platform=macOS' \
+		test
+	@echo "Tests passed"
+
+e2e:
+	bash "$(CURDIR)/scripts/e2e-logs.sh"
 
 run: build relaunch
 

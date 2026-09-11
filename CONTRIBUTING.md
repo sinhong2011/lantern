@@ -18,6 +18,8 @@ open Lantern.xcodeproj
 Or from the CLI:
 
 ```bash
+make test       # Swift Testing unit suite
+make e2e        # Control API + proxy log smoke (relaunches Debug app)
 make run        # generate, build, relaunch
 make open       # Xcode
 ```

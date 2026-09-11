@@ -16,6 +16,7 @@ final class LocalProxy: @unchecked Sendable {
     private var listener: NWListener?
     private var routes: [String: Int] = [:]
     private var port: UInt16 = 80
+    var onAccess: (@Sendable (AccessEvent) -> Void)?
 
     func updateRoutes(_ aliases: [ServiceAlias]) {
         var next: [String: Int] = [:]
@@ -83,8 +84,20 @@ final class LocalProxy: @unchecked Sendable {
     }
 
     private func handle(_ connection: NWConnection) {
+        let started = ConnectGate()
+        connection.stateUpdateHandler = { [weak self] state in
+            guard let self else { return }
+            switch state {
+            case .ready:
+                guard started.markReady() else { return }
+                self.receiveHeader(connection, buffer: Data())
+            case .failed, .cancelled:
+                connection.cancel()
+            default:
+                break
+            }
+        }
         connection.start(queue: DispatchQueue.global(qos: .userInitiated))
-        receiveHeader(connection, buffer: Data())
     }
 
     private func receiveHeader(_ connection: NWConnection, buffer: Data) {
@@ -108,7 +121,11 @@ final class LocalProxy: @unchecked Sendable {
     }
 
     private func route(client: NWConnection, initial: Data) {
+        let line = HTTPAccess.requestLine(from: initial)
+        let remote = Self.clientAddress(of: client)
+
         guard let host = Self.host(from: initial)?.lowercased() else {
+            emit(method: line.method, path: line.path, host: "", client: remote, localPort: nil, outcome: .missingHost)
             sendQuick(client, status: 400, body: "Missing Host header.")
             return
         }
@@ -117,31 +134,92 @@ final class LocalProxy: @unchecked Sendable {
         lock.unlock()
 
         guard let localPort else {
+            emit(method: line.method, path: line.path, host: host, client: remote, localPort: nil, outcome: .unknownHost)
             sendQuick(client, status: 404, body: "Unknown host. Add an alias in Lantern.")
             return
         }
 
         let endpoint = NWEndpoint.hostPort(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: UInt16(localPort))!)
         let upstream = NWConnection(to: endpoint, using: Self.tcpParameters())
-        let rewriter = RequestStreamRewriter(localPort: localPort)
-        upstream.start(queue: DispatchQueue.global(qos: .userInitiated))
+        let rewriter = RequestStreamRewriter(localPort: localPort) { [weak self] header in
+            guard let self else { return }
+            let next = HTTPAccess.requestLine(from: header)
+            let nextHost = Self.host(from: header)?.lowercased() ?? host
+            self.emit(
+                method: next.method,
+                path: next.path,
+                host: nextHost,
+                client: remote,
+                localPort: localPort,
+                outcome: .forwarded
+            )
+        }
+        let connect = ConnectGate()
+        let fail: @Sendable () -> Void = { [weak self] in
+            guard let self, connect.consumeFailure() else { return }
+            self.emit(
+                method: line.method,
+                path: line.path,
+                host: host,
+                client: remote,
+                localPort: localPort,
+                outcome: .upstreamDown
+            )
+            self.sendQuick(client, status: 502, body: "Upstream is down.")
+            upstream.cancel()
+        }
         upstream.stateUpdateHandler = { [weak self] state in
             guard let self else { return }
             switch state {
             case .ready:
+                guard connect.markReady() else { return }
                 let first = rewriter.ingest(initial)
                 if !first.isEmpty {
                     upstream.send(content: first, completion: .contentProcessed { _ in })
                 }
                 self.pipe(from: client, to: upstream, rewriter: rewriter)
                 self.pipe(from: upstream, to: client, rewriter: nil)
-            case .failed, .cancelled:
-                client.cancel()
-                upstream.cancel()
+            case .failed:
+                fail()
+            case .cancelled:
+                if !connect.didReady {
+                    fail()
+                } else {
+                    client.cancel()
+                    upstream.cancel()
+                }
             default:
                 break
             }
         }
+        upstream.start(queue: DispatchQueue.global(qos: .userInitiated))
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 2, execute: fail)
+    }
+
+    private func emit(
+        method: String,
+        path: String,
+        host: String,
+        client: String?,
+        localPort: Int?,
+        outcome: AccessEvent.Outcome
+    ) {
+        onAccess?(AccessEvent(
+            method: method,
+            path: path,
+            host: host,
+            client: client,
+            localPort: localPort,
+            outcome: outcome
+        ))
+    }
+
+    private static func clientAddress(of connection: NWConnection) -> String? {
+        guard let endpoint = connection.currentPath?.remoteEndpoint else { return nil }
+        if case .hostPort(let host, _) = endpoint {
+            return "\(host)"
+        }
+        return nil
     }
 
     private func pipe(from: NWConnection, to: NWConnection, rewriter: RequestStreamRewriter?) {
@@ -309,16 +387,47 @@ final class LocalProxy: @unchecked Sendable {
     }
 }
 
+private final class ConnectGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var ready = false
+    private var failed = false
+
+    var didReady: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return ready
+    }
+
+    @discardableResult
+    func markReady() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !ready, !failed else { return false }
+        ready = true
+        return true
+    }
+
+    func consumeFailure() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !ready, !failed else { return false }
+        failed = true
+        return true
+    }
+}
+
 /// Rewrites Host/Origin on every HTTP/1.1 request in a keep-alive stream.
 private final class RequestStreamRewriter: @unchecked Sendable {
     private let lock = NSLock()
     private let localPort: Int
+    private let onRequest: (@Sendable (Data) -> Void)?
     private var buffer = Data()
     private var bodyRemaining: Int = 0
     private var passthrough = false
 
-    init(localPort: Int) {
+    init(localPort: Int, onRequest: (@Sendable (Data) -> Void)? = nil) {
         self.localPort = localPort
+        self.onRequest = onRequest
     }
 
     func ingest(_ data: Data) -> Data {
@@ -345,8 +454,16 @@ private final class RequestStreamRewriter: @unchecked Sendable {
             guard let headerEnd = buffer.range(of: Data("\r\n\r\n".utf8)) else { break }
             let headerBlock = Data(buffer[..<headerEnd.upperBound])
             buffer.removeSubrange(..<headerEnd.upperBound)
+            onRequest?(headerBlock)
             let rewritten = LocalProxy.rewriteForUpstream(headerBlock, localPort: localPort)
             output.append(rewritten)
+
+            if HTTPAccess.isWebSocketUpgrade(headerBlock) {
+                passthrough = true
+                output.append(buffer)
+                buffer.removeAll()
+                break
+            }
 
             if let length = LocalProxy.contentLength(in: rewritten) {
                 bodyRemaining = length

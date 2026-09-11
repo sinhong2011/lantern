@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build (macOS)
+    name: Test (macOS)
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -19,7 +19,7 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Generate & build
+      - name: Generate, test & build
         run: |
           xcodegen generate
           xcodebuild \
@@ -27,7 +27,8 @@ jobs:
             -scheme Lantern \
             -configuration Debug \
             -derivedDataPath build/DerivedData \
-            build \
+            -destination 'platform=macOS' \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=YES
+            CODE_SIGNING_ALLOWED=YES \
+            test

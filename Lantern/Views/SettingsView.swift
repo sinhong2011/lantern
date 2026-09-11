@@ -3,7 +3,7 @@ import ServiceManagement
 import SwiftUI
 
 private enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
-    case general, easyURLs, advanced, about
+    case general, easyURLs, logs, advanced, about
 
     var id: String { rawValue }
 
@@ -11,6 +11,7 @@ private enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .general: return "General"
         case .easyURLs: return "Easy URLs"
+        case .logs: return "Logs"
         case .advanced: return "Advanced"
         case .about: return "About"
         }
@@ -20,6 +21,7 @@ private enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .general: return "gearshape"
         case .easyURLs: return "link"
+        case .logs: return "list.bullet.rectangle"
         case .advanced: return "terminal"
         case .about: return "info.circle"
         }
@@ -50,7 +52,7 @@ struct SettingsView: View {
             detailPane
         }
         .navigationSplitViewStyle(.balanced)
-        .frame(minWidth: 640, idealWidth: 680, minHeight: 440, idealHeight: 480)
+        .frame(minWidth: 640, idealWidth: 720, minHeight: 440, idealHeight: 520)
     }
 
     @ViewBuilder
@@ -91,6 +93,10 @@ struct SettingsView: View {
                         .tint(LanternTheme.accent)
                     }
                 }
+            }
+        case .logs:
+            SettingsDetail(title: "Logs", symbol: SettingsPane.logs.symbol, maxContentWidth: 640, scrolls: false) {
+                LogsSettingsView()
             }
         case .easyURLs:
             SettingsDetail(title: "Easy URLs", symbol: SettingsPane.easyURLs.symbol) {
@@ -366,26 +372,36 @@ struct SettingsView: View {
 private struct SettingsDetail<Content: View>: View {
     let title: String
     let symbol: String
+    var maxContentWidth: CGFloat = 520
+    var scrolls: Bool = true
     @ViewBuilder var content: Content
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(spacing: 8) {
-                    Image(systemName: symbol)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(LanternTheme.accent)
-                    Text(title)
-                        .font(.system(size: 20, weight: .semibold))
-                    Spacer()
-                }
-
-                content
+        Group {
+            if scrolls {
+                ScrollView { pane }
+            } else {
+                pane
             }
-            .padding(24)
-            .frame(maxWidth: 520, alignment: .leading)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .background(Color(nsColor: .windowBackgroundColor))
+    }
+
+    private var pane: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 8) {
+                Image(systemName: symbol)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(LanternTheme.accent)
+                Text(title)
+                    .font(.system(size: 20, weight: .semibold))
+                Spacer()
+            }
+
+            content
+        }
+        .padding(24)
+        .frame(maxWidth: maxContentWidth, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: scrolls ? nil : .infinity, alignment: .topLeading)
     }
 }
