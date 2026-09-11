@@ -50,6 +50,16 @@ No changes required in the target project — Lantern rewrites `Host` to localho
 - Settings (General / Logs / Advanced / About)
 - Access + activity log (menu row, Settings → Logs, `logs.jsonl`, Console.app)
 
+## Install
+
+```bash
+brew install --cask sinhong2011/lantern/lantern-local
+```
+
+Or download the notarized [DMG](https://github.com/sinhong2011/lantern/releases/latest/download/Lantern.dmg). Sparkle keeps either install up to date.
+
+`homebrew/cask` already has [GetLantern](https://lantern.io) as `lantern`, so this tap uses **`lantern-local`**. Homebrew 6 asks you to trust third-party taps on first install.
+
 ## Requirements
 
 - **Download:** macOS 14+
