@@ -81,6 +81,7 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
         run: |
           chmod +x scripts/ci-notarize.sh
           scripts/ci-notarize.sh
@@ -96,12 +97,14 @@ jobs:
             dist/notarized/Lantern.app \
             "$TAG_NAME"
 
-      - name: Attach zip and appcast
+      - name: Attach zip, dmg, and appcast
         env:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
         run: |
           gh release upload "$TAG_NAME" \
-            dist/updates/Lantern.zip \
+            "dist/updates/Lantern-${TAG_NAME}.zip" \
             dist/updates/appcast.xml \
+            "dist/notarized/Lantern-${TAG_NAME}.dmg" \
+            dist/notarized/Lantern.dmg \
             --clobber
