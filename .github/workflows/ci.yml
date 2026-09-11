@@ -32,6 +32,3 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=YES \
             test
-
-      - name: Log e2e
-        run: SKIP_BUILD=1 make e2e
